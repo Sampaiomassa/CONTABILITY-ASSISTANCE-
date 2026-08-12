@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Smart Contability Assistance — Assistente Fiscal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1A1A18;--bg2:#222220;--bg3:#2A2A28;--bg4:#323230;
+  --border:#3C3C3A;--border2:#484846;
+  --or:#E8610A;--orl:#2E1A08;--orm:#F07030;--orhov:#c4520a;
+  --text:#E8E6E1;--muted:#A8A6A1;--dim:#686662;
+  --gn:#72B03A;--gnbg:#192808;--gnborder:#2d4a10;
+  --am:#E8B84B;--ambg:#2A1E06;
+  --rd:#D05050;--rdbg:#2A0D0D;
+  --bl:#5A9FD4;--blbg:#0D1E2E;
+  --pu:#8B7BD4;--pubg:#1A1830;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;font-size:14px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* HEADER */
+.hdr{background:var(--bg3);border-bottom:2px solid var(--or);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:90}
+.hdr-logo{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.hdr-logo span{color:var(--orm)}
+.hdr-sub{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-or{background:var(--orl);color:var(--orm);border:1px solid var(--or)}
+.badge-gn{background:var(--gnbg);color:var(--gn);border:1px solid var(--gnborder)}
+.badge-bl{background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.badge-am{background:var(--ambg);color:var(--am);border:1px solid #5a3a0a}
+.badge-bl{background:var(--blbg);color:var(--bl);border:1px solid #1e3a5a}
+
+/* LAYOUT */
+.wrap{max-width:1060px;margin:0 auto;padding:20px}
+.gap{display:flex;flex-direction:column;gap:14px}
+
+/* SUMMARY */
+.sum-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:860px){.sum-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.sum-grid{grid-template-columns:1fr 1fr}}
+.sum-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;transition:all .15s}
+.sum-card:hover{border-color:var(--orm);background:var(--bg3)}
+.sum-card.active-sc{border-color:var(--or);background:var(--orl)}
+.sum-icon{font-size:20px;margin-bottom:6px}
+.sum-title{font-size:13px;font-weight:700}
+.sum-desc{font-size:10px;color:var(--dim);margin-top:2px}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:3px}
+.tab{flex:1;padding:8px 6px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);border-radius:8px;transition:all .15s;border:none;background:transparent;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.tab.active{background:var(--or);color:#fff;font-weight:700}
+.panel{display:none}.panel.active{display:block;animation:fadeup .18s ease}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-head{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.card-title.or{color:var(--orm)}
+.card-body{padding:16px}
+.card-body.tight{padding:12px}
+
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg:last-child{margin-bottom:0}
+.fl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.fi{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-size:13px;transition:border-color .12s;outline:none;font-family:inherit}
+.fi:focus{border-color:var(--or)}
+.fi::placeholder{color:var(--dim)}
+.fi option{background:var(--bg2)}
+textarea.fi{resize:vertical;min-height:80px;line-height:1.6}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .13s;display:inline-flex;align-items:center;gap:6px}
+.btn-or{background:var(--or);color:#fff}.btn-or:hover{background:var(--orhov)}
+.btn-gn{background:#2d6a12;color:#a3e060;border:1px solid #3a8a18}.btn-gn:hover{background:#3a8a18}
+.btn-rd{background:var(--rdbg);color:var(--rd);border:1px solid #5a1a1a}.btn-rd:hover{background:#3a1010;border-color:var(--rd)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:6px}
+.btn-xs{padding:3px 8px;font-size:10px;border-radius:5px}
+.btn-full{width:100%;justify-content:center}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:660px){.g2{grid-template-columns:1fr}}
+
+/* TABLE */
+.tbl-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:8px 12px;text-align:left;font-size:10px;color:var(--dim);font-weight:700;background:var(--bg);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* CHECKLIST */
+.chk{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bg3);font-size:12px}
+.chk:last-child{border-bottom:none}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;transition:background .2s}
+.dot-ok{background:var(--gn)}.dot-no{background:var(--border2)}
+
+/* FRASE */
+.frase-card{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:13px 15px;transition:border-color .13s}
+.frase-card:hover{border-color:var(--border2)}
+
+/* CLI ROW */
+.cli-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bg3);font-size:12px}
+.cli-row:last-child{border-bottom:none}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:22px;max-width:540px;width:95%;animation:fadeup .18s ease;max-height:90vh;overflow-y:auto}
+
+/* STATUS */
+.status{padding:8px 13px;border-radius:7px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:7px}
+.s-ok{background:var(--gnbg);border:1px solid var(--gnborder);color:var(--gn)}
+.s-err{background:var(--rdbg);border:1px solid #5a1a1a;color:var(--rd)}
+.s-info{background:var(--blbg);border:1px solid #1e3a5a;color:var(--bl)}
+
+/* DROP */
+.drop{border:2px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg)}
+.drop:hover,.drop.drag{border-color:var(--or);background:var(--orl)}
+
+/* CHAT */
+.chat-area{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;min-height:240px;max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.msg-user{background:var(--or);padding:10px 14px;border-radius:10px;font-size:13px;max-width:78%;margin-left:auto;line-height:1.6;color:#fff;animation:fadeup .18s ease}
+.msg-bot{background:var(--bg3);padding:10px 14px;border-radius:10px;font-size:13px;max-width:78%;line-height:1.6;border:1px solid var(--border);animation:fadeup .18s ease}
+
+/* PBAR */
+.pbar-bg{height:5px;background:var(--border);border-radius:4px;margin-top:8px}
+.pbar{height:5px;border-radius:4px;background:var(--or);transition:width .3s}
+
+/* CAT TAGS */
+.cat-cobranca{background:#3D1608;color:#F07030;border:1px solid #5a2010}
+.cat-regularizacao{background:var(--gnbg);color:var(--gn);border:1px solid var(--gnborder)}
+.cat-orientacao{background:var(--pubg);color:var(--pu);border:1px solid #2a2448}
+.cat-boas-vindas{background:var(--blbg);color:var(--bl);border:1px solid #1e3a5a}
+.cat-outros{background:var(--bg4);color:var(--muted);border:1px solid var(--border)}
+.cat-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+
+/* MISC */
+.empty{text-align:center;color:var(--dim);padding:24px;font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <div class="hdr-logo">Smart <span>Contability</span> Assistance <span style="font-size:11px;color:var(--dim);font-weight:400">· Assistente Fiscal</span></div>
+    <div class="hdr-sub">Sistema operacional contábil</div>
+  </div>
+  <div class="hdr-right">
+    <span id="hdr-frases" class="badge badge-or" style="display:none"></span>
+    <span id="hdr-clientes" class="badge badge-gn" style="display:none"></span>
+  </div>
+</div>
+
+<div class="wrap gap">
+
+  <!-- SUMMARY CARDS -->
+  <div class="sum-grid">
+    <div class="sum-card active-sc" id="sc-cadastro" onclick="setTab('cadastro')">
+      <div class="sum-icon">👤</div><div class="sum-title">Clientes</div><div class="sum-desc">Cadastro e checklist</div>
+    </div>
+    <div class="sum-card" id="sc-levantamento" onclick="setTab('levantamento')">
+      <div class="sum-icon">📋</div><div class="sum-title">Levantamento</div><div class="sum-desc">Dívidas e tributos</div>
+    </div>
+    <div class="sum-card" id="sc-planilha" onclick="setTab('planilha')">
+      <div class="sum-icon">📊</div><div class="sum-title">Planilhas</div><div class="sum-desc">Importação grupos</div>
+    </div>
+    <div class="sum-card" id="sc-frases" onclick="setTab('frases')">
+      <div class="sum-icon">💬</div><div class="sum-title" style="color:var(--orm)">Frases Salvas</div><div class="sum-desc">Copiar com 1 clique</div>
+    </div>
+    <div class="sum-card" id="sc-ia" onclick="setTab('ia')">
+      <div class="sum-icon">🤖</div><div class="sum-title">Assistente IA</div><div class="sum-desc">Respostas fiscais</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tab-cadastro"     onclick="setTab('cadastro')">👤 Cadastro</button>
+    <button class="tab"        id="tab-levantamento" onclick="setTab('levantamento')">📋 Levantamento</button>
+    <button class="tab"        id="tab-planilha"     onclick="setTab('planilha')">📊 Planilha</button>
+    <button class="tab"        id="tab-frases"       onclick="setTab('frases')">💬 Frases</button>
+    <button class="tab"        id="tab-ia"           onclick="setTab('ia')">🤖 IA</button>
+  </div>
+
+  <!-- CADASTRO -->
+  <div class="panel active gap" id="panel-cadastro">
+    <div class="g2">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title or">👤 Cadastro de Cliente</div>
+          <span id="cad-status" class="badge badge-am">PENDENTE</span>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div class="fg"><label class="fl">Nome / Razão Social</label>
+            <input class="fi" id="c-nome" placeholder="Nome completo ou Razão Social" oninput="atualizarChecklist()"/></div>
+          <div class="fg"><label class="fl">CPF</label>
+            <input class="fi" id="c-cpf" placeholder="000.000.000-00" oninput="fmtCPF(this);atualizarChecklist()"/></div>
+          <div class="fg"><label class="fl">CNPJ</label>
+            <input class="fi" id="c-cnpj" placeholder="00.000.000/0001-00" oninput="fmtCNPJ(this);atualizarChecklist()"/></div>
+          <div class="fg"><label class="fl">Título de Eleitor</label>
+            <input class="fi" id="c-titulo" placeholder="Número do título" oninput="atualizarChecklist()"/></div>
+          <div class="fg"><label class="fl">E-mail</label>
+            <input class="fi" id="c-email" placeholder="cliente@email.com" oninput="atualizarChecklist()"/></div>
+          <div class="fg"><label class="fl">Senha GOV.br</label>
+            <input class="fi" id="c-senha" type="password" placeholder="Senha do portal GOV.br" oninput="atualizarChecklist()"/></div>
+          <div class="fg"><label class="fl">Observações <span style="font-weight:400;text-transform:none;color:var(--dim)">(opcional)</span></label>
+            <input class="fi" id="c-obs" placeholder="Anotação interna"/></div>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="btn btn-ghost btn-sm" onclick="limparCadastro()">Limpar</button>
+            <button class="btn btn-or btn-full" style="flex:1" onclick="salvarCliente()">✅ Salvar Cadastro</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">✔ Checklist Documental</div>
+            <span id="chk-pct" style="font-size:11px;color:var(--dim)">0/6</span>
+          </div>
+          <div class="card-body tight">
+            <div class="chk"><div class="dot dot-no" id="dot-nome"></div><span>Nome / Razão Social</span></div>
+            <div class="chk"><div class="dot dot-no" id="dot-cpf"></div><span>CPF</span></div>
+            <div class="chk"><div class="dot dot-no" id="dot-cnpj"></div><span>CNPJ</span></div>
+            <div class="chk"><div class="dot dot-no" id="dot-titulo"></div><span>Título de Eleitor</span></div>
+            <div class="chk"><div class="dot dot-no" id="dot-email"></div><span>E-mail</span></div>
+            <div class="chk"><div class="dot dot-no" id="dot-senha"></div><span>Senha GOV.br</span></div>
+            <div class="pbar-bg"><div class="pbar" id="chk-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="card" style="flex:1">
+          <div class="card-head">
+            <div class="card-title">📁 Clientes Salvos</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span id="cli-count" style="font-size:11px;color:var(--dim)">0</span>
+              <button class="btn btn-ghost btn-xs" onclick="exportarClientesCSV()">↓ CSV</button>
+            </div>
+          </div>
+          <div class="card-body tight" id="cli-list">
+            <div class="empty">Nenhum cliente salvo ainda.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVANTAMENTO -->
+  <div class="panel gap" id="panel-levantamento">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title or">📋 Levantamento de Dívidas</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="exportarLevantamentoPDF()" title="Exportar relatório em PDF">📄 Exportar PDF</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportarLevantamentoExcel()" title="Exportar planilha Excel">📊 Exportar Excel</button>
+        </div>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+        <div class="g2">
+          <!-- Drop Zone com IA -->
+          <div id="lev-drop-zone" class="drop"
+            onclick="document.getElementById('lev-file').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="event.preventDefault();this.classList.remove('drag');levHandleDrop(event)">
+            <div id="lev-drop-content">
+              <div style="font-size:28px;margin-bottom:6px">🤖</div>
+              <div style="font-weight:700;font-size:14px">Arraste o boleto ou print aqui</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px">JPG, PNG ou PDF — IA extrai os valores automaticamente</div>
+            </div>
+            <div id="lev-loading" style="display:none;flex-direction:column;align-items:center;gap:8px">
+              <div style="font-size:26px">⏳</div>
+              <div style="font-weight:700;font-size:13px" id="lev-loading-txt">Analisando documento...</div>
+              <div style="font-size:11px;color:var(--muted)">Aguarde, a IA está lendo o boleto</div>
+            </div>
+            <input type="file" id="lev-file" multiple accept="image/*,.pdf" style="display:none"
+              onchange="levHandleFiles(this.files)"/>
+          </div>
+          <!-- Tributos Reconhecidos -->
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:16px">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Tributos Reconhecidos pela IA</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px">
+              <div style="display:flex;justify-content:space-between"><span>DAS MEI</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>DAS Simples Nacional</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>IRRF</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>CP-SEGUR / INSS</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>TFE</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Dívida Ativa União</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Dívida Ativa Prefeitura</span><span class="badge badge-gn">✓ Ok</span></div>
+            </div>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">
+              💡 Solte qualquer boleto ou extrato — a IA identifica o tipo automaticamente
+            </div>
+          </div>
+        </div>
+
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Tributo</th><th>Data</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+            <tbody id="div-body">
+              <tr><td>DAS MEI</td><td>03/2022</td><td>R$ 1.240,00</td><td><span class="badge badge-or">Em atraso</span></td><td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td></tr>
+              <tr><td>INSS (CP-SEGUR)</td><td>06/2021</td><td>R$ 830,00</td><td><span class="badge badge-or">Em atraso</span></td><td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td></tr>
+              <tr><td>IRRF</td><td>11/2020</td><td>R$ 2.100,00</td><td><span class="badge badge-or">Em atraso</span></td><td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td></tr>
+              <tr><td>Dívida Ativa União</td><td>02/2019</td><td>R$ 4.800,00</td><td><span class="badge badge-or">Em atraso</span></td><td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input class="fi" id="nv-tri" placeholder="Tributo" style="flex:2;min-width:120px"/>
+          <input class="fi" id="nv-dt"  placeholder="Data (MM/AAAA)" style="flex:1;min-width:110px"/>
+          <input class="fi" id="nv-val" placeholder="Valor (R$)" style="flex:1;min-width:110px"/>
+          <button class="btn btn-gn btn-sm" onclick="addDivida()">+ Adicionar</button>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end">
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:14px 22px;min-width:220px">
+            <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Total Estimado</div>
+            <div style="font-size:22px;font-weight:700;color:var(--gn)" id="tot-div">R$ 8.970,00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLANILHA -->
+  <div class="panel gap" id="panel-planilha">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title or">📊 Importar Planilha de Grupos</div>
+        <span class="badge badge-gn">Limite: 50 MB</span>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+
+        <div class="drop" id="xl-drop"
+          onclick="document.getElementById('xl-file').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="event.preventDefault();this.classList.remove('drag');handleXLDrop(event)">
+          <div style="font-size:28px;margin-bottom:6px">📂</div>
+          <div style="font-weight:700;font-size:14px">Arraste ou clique para importar</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Aceita .xlsx, .xls, .csv até 50 MB</div>
+          <input type="file" id="xl-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="previewPlanilha(this)"/>
+        </div>
+
+        <div id="xl-status" class="status s-info" style="display:none"></div>
+
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Mapeamento Automático</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Coluna da Planilha</th><th>Campo no Sistema</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Cliente / Nome / Razão</td><td>Nome do Cliente</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
+                <tr><td>Documento / CPF / CNPJ</td><td>Documento</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
+                <tr><td>Gov / Senha / Password</td><td>Senha GOV.br</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
+                <tr><td>Email / E-mail</td><td>E-mail</td><td><span class="badge badge-am">⚠ Opcional</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="xl-preview" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span id="xl-prev-title" style="font-size:12px;font-weight:700;color:var(--muted)">Pré-visualização</span>
+            <button class="btn btn-gn btn-sm" onclick="confirmarImport()">✅ Confirmar Importação</button>
+          </div>
+          <div class="tbl-wrap" style="overflow-x:auto">
+            <table><thead id="xl-head"></thead><tbody id="xl-body"></tbody></table>
+          </div>
+        </div>
+
+        <div id="xl-ok" style="display:none" class="status s-ok"></div>
+        <button id="btn-limpar-db" class="btn btn-rd btn-sm" style="display:none;margin-top:4px" onclick="limparPlanilhaSalva()">🗑 Remover planilha salva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRASES -->
+  <div class="panel gap" id="panel-frases">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title or">💬 Nova Frase</div>
+        <span class="badge badge-bl">Auto-salvo</span>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div class="g2">
+          <div class="fg"><label class="fl">Título / Assunto</label>
+            <input class="fi" id="fr-titulo" placeholder="Ex: DAS MEI em atraso"/></div>
+          <div class="fg"><label class="fl">Categoria</label>
+            <select class="fi" id="fr-cat">
+              <option value="cobranca">💰 Cobrança</option>
+              <option value="regularizacao">✅ Regularização</option>
+              <option value="orientacao">📌 Orientação</option>
+              <option value="boas-vindas">👋 Boas-vindas</option>
+              <option value="outros">📎 Outros</option>
+            </select></div>
+        </div>
+        <div class="fg"><label class="fl">Texto da mensagem</label>
+          <textarea class="fi" id="fr-texto" rows="4" placeholder="Cole aqui a mensagem padrão..."></textarea></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-ghost btn-sm" onclick="limparFraseForm()">Limpar</button>
+          <button class="btn btn-gn" onclick="salvarFrase()">💾 Salvar Frase</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input class="fi" id="fr-busca" placeholder="🔍 Buscar frase..." oninput="renderFrases()" style="flex:1;min-width:180px"/>
+      <select class="fi" id="fr-filtro" onchange="renderFrases()" style="max-width:180px">
+        <option value="">Todas as categorias</option>
+        <option value="cobranca">💰 Cobrança</option>
+        <option value="regularizacao">✅ Regularização</option>
+        <option value="orientacao">📌 Orientação</option>
+        <option value="boas-vindas">👋 Boas-vindas</option>
+        <option value="outros">📎 Outros</option>
+      </select>
+      <span id="fr-count" style="font-size:11px;color:var(--dim);white-space:nowrap"></span>
+    </div>
+
+    <div id="fr-lista" style="display:flex;flex-direction:column;gap:10px">
+      <div class="empty">Nenhuma frase salva ainda.</div>
+    </div>
+  </div>
+
+  <!-- IA -->
+  <div class="panel gap" id="panel-ia">
+    <div id="ia-ctx-banner" style="display:none;background:var(--gnbg);border:1px solid var(--gnborder);border-radius:9px;padding:10px 14px;font-size:12px;color:var(--gn);align-items:center;gap:8px">
+      <span style="font-size:16px">📊</span>
+      <span id="ia-ctx-txt">Planilha carregada!</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <span style="font-size:10px;color:var(--dim);align-self:center">Perguntas rápidas:</span>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('listar todos os clientes')">👥 Listar clientes</button>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('quais clientes têm DAS MEI em atraso?')">📌 DAS MEI atrasado</button>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('quem está com dívida ativa?')">⚠️ Dívida ativa</button>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('clientes MEI')">🏪 Ver MEIs</button>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('resumo geral da planilha')">📊 Resumo</button>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('o que é DAS MEI?')">💡 DAS MEI</button>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('como funciona o parcelamento do Simples Nacional?')">💳 Parcelamento</button>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('prazos do IRPF 2026')">📅 IRPF</button>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title or">🤖 Assistente Fiscal Inteligente</div>
+        <span id="ia-mode-badge" class="badge badge-gn">✅ Sem API</span>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+        <div class="chat-area" id="chat-area">
+          <div class="msg-bot" style="white-space:pre-wrap">Olá! Sou o Assistente Fiscal. 💼
+
+Funciono 100% sem chave API.
+
+📊 Com planilha importada respondo sobre qualquer cliente: nome, CNPJ, CPF, regime, situação, e-mail — qualquer coluna da sua planilha.
+
+📚 Também respondo sobre DAS MEI, Simples Nacional, IRPF, dívida ativa, parcelamentos e obrigações fiscais.
+
+Importe sua planilha na aba Planilha e pergunte aqui!</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <input class="fi" id="ia-input" placeholder="Ex: qual o CNPJ da Maria Santos? / listar MEIs / o que é dívida ativa?" style="flex:1"
+            onkeydown="if(event.key==='Enter')enviarIA()"/>
+          <button class="btn btn-or" id="ia-send-btn" onclick="enviarIA()">Enviar ↵</button>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-ghost btn-sm" onclick="limparChat()">🗑 Limpar conversa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL EDITAR FRASE -->
+<div class="modal-bg" id="modal-edit">
+  <div class="modal">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--orm)">✏️ Editar Frase</h3>
+    <input type="hidden" id="edit-id"/>
+    <div class="g2" style="margin-bottom:10px">
+      <div class="fg"><label class="fl">Título</label><input class="fi" id="edit-titulo"/></div>
+      <div class="fg"><label class="fl">Categoria</label>
+        <select class="fi" id="edit-cat">
+          <option value="cobranca">💰 Cobrança</option>
+          <option value="regularizacao">✅ Regularização</option>
+          <option value="orientacao">📌 Orientação</option>
+          <option value="boas-vindas">👋 Boas-vindas</option>
+          <option value="outros">📎 Outros</option>
+        </select></div>
+    </div>
+    <div class="fg" style="margin-bottom:16px"><label class="fl">Texto</label>
+      <textarea class="fi" id="edit-texto" rows="6"></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-gn" onclick="salvarEdicao()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER CLIENTE -->
+<div class="modal-bg" id="modal-cli">
+  <div class="modal">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--orm)">👤 Dados do Cliente</h3>
+    <div id="modal-cli-body" style="font-size:13px;display:flex;flex-direction:column;gap:0"></div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-cli').classList.remove('open')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// TABS
+function setTab(id) {
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sum-card').forEach(c=>c.classList.remove('active-sc'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+  document.getElementById('sc-'+id).classList.add('active-sc');
+}
+
+// FORMATAÇÃO
+function fmtCPF(el){let v=el.value.replace(/\D/g,'').slice(0,11);v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');el.value=v;}
+function fmtCNPJ(el){let v=el.value.replace(/\D/g,'').slice(0,14);v=v.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{4})(\d{1,2})$/,'$1-$2');el.value=v;}
+
+// CHECKLIST
+function atualizarChecklist(){
+  const campos=['nome','cpf','cnpj','titulo','email','senha'];
+  let ok=0;
+  campos.forEach(c=>{
+    const v=(document.getElementById('c-'+c)||{}).value||'';
+    const dot=document.getElementById('dot-'+c);
+    if(v.trim()){dot.className='dot dot-ok';ok++;}else{dot.className='dot dot-no';}
+  });
+  document.getElementById('chk-pct').textContent=ok+'/6';
+  document.getElementById('chk-bar').style.width=(ok/6*100)+'%';
+  const tag=document.getElementById('cad-status');
+  if(ok===6){tag.textContent='COMPLETO';tag.className='badge badge-gn';}
+  else if(ok>=3){tag.textContent='PARCIAL';tag.className='badge badge-bl';}
+  else{tag.textContent='PENDENTE';tag.className='badge badge-am';}
+}
+
+// CLIENTES
+let clientes=JSON.parse(localStorage.getItem('afi_clientes')||'[]');
+
+function salvarCliente(){
+  const nome=document.getElementById('c-nome').value.trim();
+  if(!nome){alert('Preencha ao menos o nome.');return;}
+  clientes.unshift({
+    id:Date.now(),nome,
+    cpf:document.getElementById('c-cpf').value.trim(),
+    cnpj:document.getElementById('c-cnpj').value.trim(),
+    titulo:document.getElementById('c-titulo').value.trim(),
+    email:document.getElementById('c-email').value.trim(),
+    senha:document.getElementById('c-senha').value.trim(),
+    obs:document.getElementById('c-obs').value.trim(),
+    dt:new Date().toLocaleDateString('pt-BR')
+  });
+  salvarClientes();renderClientes();limparCadastro();
+}
+
+function salvarClientes(){
+  localStorage.setItem('afi_clientes',JSON.stringify(clientes));
+  const n=clientes.length;const hdr=document.getElementById('hdr-clientes');
+  if(n>0){hdr.textContent=n+' cliente'+(n!==1?'s':'');hdr.style.display='inline-flex';}else hdr.style.display='none';
+}
+
+function limparCadastro(){
+  ['nome','cpf','cnpj','titulo','email','senha','obs'].forEach(f=>document.getElementById('c-'+f).value='');
+  atualizarChecklist();
+}
+
+function renderClientes(){
+  const el=document.getElementById('cli-list');
+  document.getElementById('cli-count').textContent=clientes.length+' cliente'+(clientes.length!==1?'s':'');
+  if(!clientes.length){el.innerHTML='<div class="empty">Nenhum cliente salvo ainda.</div>';return;}
+  el.innerHTML=clientes.slice(0,10).map((c,i)=>`
+    <div class="cli-row">
+      <div><div style="font-weight:600;font-size:13px">${esc(c.nome)}</div>
+      <div style="font-size:10px;color:var(--dim)">${c.cnpj||c.cpf||'—'} · ${c.dt}</div></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-xs" onclick="verCliente(${i})">👁</button>
+        <button class="btn btn-rd btn-xs" onclick="remCliente(${i})">✕</button>
+      </div>
+    </div>`).join('')+(clientes.length>10?`<div style="font-size:11px;color:var(--dim);text-align:center;padding:8px">+${clientes.length-10} mais...</div>`:'');
+}
+
+function verCliente(i){
+  const c=clientes[i];
+  document.getElementById('modal-cli-body').innerHTML=[
+    ['Nome',c.nome],['CPF',c.cpf],['CNPJ',c.cnpj],
+    ['Título',c.titulo],['E-mail',c.email],
+    ['GOV.br',c.senha?'••••••••':'—'],['Obs',c.obs],['Cadastro',c.dt]
+  ].filter(([,v])=>v).map(([k,v])=>`
+    <div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-weight:700;color:var(--muted);min-width:75px;font-size:10px;text-transform:uppercase">${k}</span>
+      <span style="font-size:13px">${esc(v)}</span>
+    </div>`).join('');
+  document.getElementById('modal-cli').classList.add('open');
+}
+
+function remCliente(i){
+  if(!confirm('Remover "'+clientes[i].nome+'"?'))return;
+  clientes.splice(i,1);salvarClientes();renderClientes();
+}
+
+function exportarClientesCSV(){
+  if(!clientes.length){alert('Nenhum cliente salvo.');return;}
+  let csv='Nome,CPF,CNPJ,Email,Data\n';
+  clientes.forEach(c=>{csv+=[c.nome,c.cpf,c.cnpj,c.email,c.dt].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')+'\n';});
+  baixar('\uFEFF'+csv,'clientes_'+hoje()+'.csv','text/csv;charset=utf-8');
+}
+
+// LEVANTAMENTO
+function remDivida(btn){btn.closest('tr').remove();recalcDiv();}
+function addDivida(){
+  const t=document.getElementById('nv-tri').value.trim();
+  const d=document.getElementById('nv-dt').value.trim();
+  const v=document.getElementById('nv-val').value.trim();
+  if(!t||!v){alert('Preencha Tributo e Valor.');return;}
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${esc(t)}</td><td>${d||'—'}</td><td>${v.startsWith('R$')?v:'R$ '+v}</td>
+    <td><span class="badge badge-or">Em atraso</span></td>
+    <td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td>`;
+  document.getElementById('div-body').appendChild(tr);
+  document.getElementById('nv-tri').value='';document.getElementById('nv-dt').value='';document.getElementById('nv-val').value='';
+  recalcDiv();
+}
+function recalcDiv(){
+  let total=0;
+  document.querySelectorAll('#div-body td:nth-child(3)').forEach(td=>{
+    total+=parseFloat(td.textContent.replace(/[^\d,]/g,'').replace(',','.'))||0;
+  });
+  document.getElementById('tot-div').textContent='R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2});
+}
+// ── LEVANTAMENTO: Upload handler ────────────────────────────────────────────
+function levHandleDrop(e){
+  const files = e.dataTransfer.files;
+  if(files.length) levHandleFiles(files);
+}
+
+async function levHandleFiles(files){
+  for(const file of files){
+    await levAnalisarArquivo(file);
+  }
+}
+
+function levSetLoading(on, txt){
+  const content = document.getElementById('lev-drop-content');
+  const loading  = document.getElementById('lev-loading');
+  const loadTxt  = document.getElementById('lev-loading-txt');
+  if(on){
+    content.style.display = 'none';
+    loading.style.display = 'flex';
+    if(txt) loadTxt.textContent = txt;
+  } else {
+    content.style.display = '';
+    loading.style.display = 'none';
+  }
+}
+
+async function levAnalisarArquivo(file){
+  const isPDF = file.type === 'application/pdf';
+  const isImg = file.type.startsWith('image/');
+  if(!isPDF && !isImg){
+    alert('Formato não suportado. Use JPG, PNG ou PDF.');
+    return;
+  }
+  levSetLoading(true, 'Preparando leitura de "' + file.name + '"...');
+  _levProcessar(file, isPDF).catch(err => {
+    levSetLoading(false);
+    alert('Erro ao analisar documento: ' + err.message);
+    console.error(err);
+  });
+}
+
+// Parser de texto OCR → tributos fiscais
+function levParsearTexto(texto){
+  const t = texto;
+  const itens = [];
+
+  // Padrões de valor monetário: R$ 1.234,56 ou 1.234,56 isolado
+  const reValor = /R\$\s?([\d\.]+,\d{2})|(?<![a-zA-Z])([\d]{1,3}(?:\.\d{3})*,\d{2})(?![a-zA-Z\d])/g;
+
+  // Padrões de data: MM/AAAA ou MM/AA
+  const reData = /(\d{2}\/(?:20\d{2}|19\d{2}|\d{2}))/g;
+
+  // Mapa de tributos — palavras-chave → nome padronizado
+  const TRIBUTOS = [
+    { re: /DAS\s*MEI|Microempreendedor\s*Individual/i,          nome: 'DAS MEI' },
+    { re: /DAS\s*Simples|Simples\s*Nacional|PGDAS/i,            nome: 'DAS Simples Nacional' },
+    { re: /IRRF|Imposto\s*de\s*Renda\s*Retido/i,               nome: 'IRRF' },
+    { re: /INSS|CP[_\-\s]?SEGUR|Previdência\s*Social/i,        nome: 'INSS / CP-SEGUR' },
+    { re: /TFE|Taxa\s*de\s*Funcionamento|Licença/i,            nome: 'TFE / Licença' },
+    { re: /Dívida\s*Ativa\s*(?:da\s*)?União|PGFN/i,            nome: 'Dívida Ativa União' },
+    { re: /Dívida\s*Ativa\s*(?:da\s*)?Prefeitura|ISS\s*retido/i, nome: 'Dívida Ativa Prefeitura' },
+    { re: /IPTU/i,                                              nome: 'IPTU' },
+    { re: /ISS(?!\s*retido)|Imposto\s*s(?:ob|obre)\s*Servi/i,  nome: 'ISS' },
+    { re: /CSLL/i,                                              nome: 'CSLL' },
+    { re: /PIS(?:\/COFINS)?/i,                                  nome: 'PIS/COFINS' },
+    { re: /COFINS/i,                                            nome: 'COFINS' },
+    { re: /FGTS/i,                                              nome: 'FGTS' },
+    { re: /ICMS/i,                                              nome: 'ICMS' },
+    { re: /Parcelamento|PERT|REFIS/i,                          nome: 'Parcelamento' },
+  ];
+
+  // Divide o texto em blocos por linha/parágrafo
+  const linhas = t.split(/\n/).map(l => l.trim()).filter(Boolean);
+
+  // Para cada linha, tenta casar um tributo
+  linhas.forEach((linha, i) => {
+    // Pega contexto: linha atual + 2 seguintes
+    const ctx = linhas.slice(i, i+3).join(' ');
+
+    for(const { re, nome } of TRIBUTOS){
+      if(!re.test(ctx)) continue;
+
+      // Extrai valor do contexto
+      const valMatch = [...ctx.matchAll(reValor)];
+      const valor = valMatch.length > 0
+        ? 'R$ ' + (valMatch[0][1] || valMatch[0][2])
+        : '—';
+
+      // Extrai data do contexto
+      const dtMatch = [...ctx.matchAll(reData)];
+      const data = dtMatch.length > 0 ? dtMatch[0][1] : '—';
+
+      // Detecta status por palavras-chave
+      const atrasado = /atraso|inadimpl|vencid|em\s*aberto|devendo|débito|inscrit/i.test(ctx);
+      const avencer  = /a\s*vencer|próximo|pendente|futuro/i.test(ctx);
+      const status   = atrasado ? 'Em atraso' : avencer ? 'A vencer' : 'Em aberto';
+
+      // Evita duplicar o mesmo tributo com mesmo valor
+      const jaExiste = itens.some(x => x.tributo === nome && x.valor === valor);
+      if(!jaExiste){
+        itens.push({ tributo: nome, data, valor, status });
+        break; // uma correspondência por linha
+      }
+    }
+  });
+
+  // Fallback: se não achou nenhum tributo nomeado mas tem valores,
+  // tenta extrair linhas com valor monetário alto (> R$50)
+  if(itens.length === 0){
+    const valoresGrandes = [];
+    linhas.forEach((linha, i) => {
+      const ctx = linhas.slice(i, i+2).join(' ');
+      const matches = [...ctx.matchAll(reValor)];
+      matches.forEach(m => {
+        const numStr = (m[1]||m[2]).replace('.','').replace(',','.');
+        const num = parseFloat(numStr);
+        if(num >= 50){
+          const dtMatch = [...ctx.matchAll(reData)];
+          valoresGrandes.push({
+            tributo: 'Débito identificado',
+            data: dtMatch[0]?.[1] || '—',
+            valor: 'R$ ' + (m[1]||m[2]),
+            status: 'Em aberto'
+          });
+        }
+      });
+    });
+    // Deduplica por valor
+    valoresGrandes.forEach(v => {
+      if(!itens.some(x => x.valor === v.valor)) itens.push(v);
+    });
+  }
+
+  return itens;
+}
+
+// Adiciona itens na tabela de dívidas
+function levAdicionarItens(itens, nomeArq){
+  if(!itens.length){
+    levSetLoading(false);
+    const zone = document.getElementById('lev-drop-content');
+    const orig = zone.innerHTML;
+    zone.innerHTML = `<div style="font-size:26px">⚠️</div>
+      <div style="font-weight:700;font-size:13px;color:var(--am)">Nenhum débito identificado</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">Verifique se o arquivo é um boleto ou extrato legível</div>`;
+    setTimeout(() => { zone.innerHTML = orig; }, 3500);
+    return;
+  }
+
+  const tbody = document.getElementById('div-body');
+  itens.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.style.animation = 'fadeIn .4s ease';
+    tr.innerHTML = `
+      <td>${esc(item.tributo||'—')}</td>
+      <td>${esc(item.data||'—')}</td>
+      <td>${esc(item.valor||'—')}</td>
+      <td><span class="badge ${item.status==='A vencer'?'badge-bl':item.status==='Em atraso'?'badge-or':'badge-am'}">${esc(item.status||'Em aberto')}</span></td>
+      <td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+
+  recalcDiv();
+  levSetLoading(false);
+
+  const zone = document.getElementById('lev-drop-content');
+  const orig = zone.innerHTML;
+  zone.innerHTML = `<div style="font-size:26px">✅</div>
+    <div style="font-weight:700;font-size:13px;color:var(--gn)">${itens.length} item(s) de "${nomeArq}" adicionado(s)!</div>`;
+  setTimeout(() => { zone.innerHTML = orig; }, 3000);
+}
+
+// Motor principal: OCR com Tesseract.js ou extração de PDF
+async function _levProcessar(file, isPDF){
+  let texto = '';
+
+  if(isPDF){
+    // PDF.js — extrai texto de cada página
+    if(typeof pdfjsLib === 'undefined'){
+      throw new Error('PDF.js não carregado. Tente uma imagem (JPG/PNG) do boleto.');
+    }
+    levSetLoading(true, '📄 Extraindo texto do PDF...');
+    const arrBuf = await file.arrayBuffer();
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({ data: arrBuf }).promise;
+    const paginas = [];
+    for(let p = 1; p <= pdf.numPages; p++){
+      const page    = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      paginas.push(content.items.map(it => it.str).join(' '));
+    }
+    texto = paginas.join('\n');
+
+    // Se PDF não tem texto (escaneado), tenta OCR via Tesseract
+    if(texto.replace(/\s/g,'').length < 30){
+      levSetLoading(true, '🔍 PDF sem texto — tentando OCR...');
+      // Renderiza primeira página como canvas
+      const page   = await pdf.getPage(1);
+      const vp     = page.getViewport({ scale: 2.0 });
+      const canvas = document.createElement('canvas');
+      canvas.width  = vp.width;
+      canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      texto = await _ocrCanvas(canvas);
+    }
+  } else {
+    // Imagem — OCR direto com Tesseract.js
+    if(typeof Tesseract === 'undefined'){
+      throw new Error('Tesseract.js não carregado. Recarregue a página e tente novamente.');
+    }
+    levSetLoading(true, '🔍 Lendo texto da imagem (OCR)... pode levar alguns segundos');
+    texto = await _ocrFile(file);
+  }
+
+  if(!texto || texto.replace(/\s/g,'').length < 10){
+    throw new Error('Não foi possível extrair texto do documento. Verifique se a imagem é legível.');
+  }
+
+  levSetLoading(true, '🧠 Identificando tributos...');
+  const itens = levParsearTexto(texto);
+  levAdicionarItens(itens, file.name);
+}
+
+// OCR de arquivo de imagem
+async function _ocrFile(file){
+  return new Promise((resolve, reject) => {
+    Tesseract.recognize(file, 'por', {
+      logger: m => {
+        if(m.status === 'recognizing text'){
+          const pct = Math.round(m.progress * 100);
+          levSetLoading(true, `🔍 OCR: ${pct}% concluído...`);
+        }
+      }
+    }).then(({ data: { text } }) => resolve(text)).catch(reject);
+  });
+}
+
+// OCR de canvas (PDF escaneado)
+async function _ocrCanvas(canvas){
+  return new Promise((resolve, reject) => {
+    Tesseract.recognize(canvas, 'por', {
+      logger: m => {
+        if(m.status === 'recognizing text'){
+          const pct = Math.round(m.progress * 100);
+          levSetLoading(true, `🔍 OCR: ${pct}% concluído...`);
+        }
+      }
+    }).then(({ data: { text } }) => resolve(text)).catch(reject);
+  });
+}
+
+
+function exportarPDF(){window.print();}
+
+// ── LEVANTAMENTO: Exportar PDF ──────────────────────────────────────────────
+function exportarLevantamentoPDF(){
+  const { jsPDF } = window.jspdf;
+  if(!jsPDF){ alert('Biblioteca jsPDF não carregada.'); return; }
+
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const linhas = coletarLinhasDivida();
+  const total  = document.getElementById('tot-div').textContent.trim();
+  const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+  // Cabeçalho
+  doc.setFillColor(234, 88, 12);            // laranja
+  doc.rect(0, 0, 210, 28, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica','bold');
+  doc.text('Levantamento de Dívidas', 14, 13);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.text('Gerado em: ' + dataHoje, 14, 22);
+
+  // Tabela
+  doc.autoTable({
+    startY: 34,
+    head: [['Tributo','Data','Valor','Status']],
+    body: linhas.map(r => [r.tributo, r.data, r.valor, r.status]),
+    styles: { fontSize: 10, cellPadding: 4 },
+    headStyles: { fillColor: [234, 88, 12], textColor: 255, fontStyle:'bold' },
+    alternateRowStyles: { fillColor: [255, 247, 237] },
+    columnStyles: {
+      2: { halign: 'right' },
+      3: { halign: 'center' }
+    },
+    margin: { left: 14, right: 14 },
+    tableLineColor: [229, 231, 235],
+    tableLineWidth: 0.3,
+  });
+
+  // Rodapé com total
+  const finalY = doc.lastAutoTable.finalY + 8;
+  doc.setDrawColor(234, 88, 12);
+  doc.setLineWidth(0.5);
+  doc.line(14, finalY, 196, finalY);
+  doc.setFontSize(11);
+  doc.setFont('helvetica','bold');
+  doc.setTextColor(30,30,30);
+  doc.text('Total Estimado:', 130, finalY + 8);
+  doc.setTextColor(22, 163, 74);  // verde
+  doc.text(total, 196, finalY + 8, { align:'right' });
+
+  doc.save('levantamento_dividas_' + hoje() + '.pdf');
+}
+
+// ── LEVANTAMENTO: Exportar Excel ────────────────────────────────────────────
+function exportarLevantamentoExcel(){
+  const linhas = coletarLinhasDivida();
+  const total  = document.getElementById('tot-div').textContent.trim();
+  const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+  // Monta dados
+  const wsData = [
+    ['Levantamento de Dívidas'],
+    ['Gerado em: ' + dataHoje],
+    [],
+    ['Tributo','Data','Valor','Status'],
+    ...linhas.map(r => [r.tributo, r.data, r.valor, r.status]),
+    [],
+    ['','','Total Estimado:', total],
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Larguras das colunas
+  ws['!cols'] = [
+    { wch: 28 }, { wch: 14 }, { wch: 18 }, { wch: 16 }
+  ];
+
+  // Mescla célula do título (A1:D1)
+  ws['!merges'] = [
+    { s:{r:0,c:0}, e:{r:0,c:3} },
+    { s:{r:1,c:0}, e:{r:1,c:3} },
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Levantamento');
+  XLSX.writeFile(wb, 'levantamento_dividas_' + hoje() + '.xlsx');
+}
+
+// ── Coleta todas as linhas da tabela de dívidas ─────────────────────────────
+function coletarLinhasDivida(){
+  const rows = document.querySelectorAll('#div-body tr');
+  const result = [];
+  rows.forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if(tds.length >= 4){
+      result.push({
+        tributo: tds[0].textContent.trim(),
+        data:    tds[1].textContent.trim(),
+        valor:   tds[2].textContent.trim(),
+        status:  tds[3].textContent.trim(),
+      });
+    }
+  });
+  return result;
+}
+
+// PLANILHA — fix "Bad compressed size"
+let rawImport=[];
+let ultimoNomeArquivo='';
+
+function handleXLDrop(e){const f=e.dataTransfer.files[0];if(f)processarXL(f);}
+function previewPlanilha(input){const f=input.files[0];if(f)processarXL(f);}
+
+function processarXL(file){
+  ultimoNomeArquivo = file.name;
+  const MAX=50*1024*1024;
+  if(file.size>MAX){xlStatus('❌ Arquivo muito grande (máx 50 MB).','err');return;}
+  const ext=file.name.split('.').pop().toLowerCase();
+  xlStatus('⏳ Lendo arquivo "'+file.name+'"...','info');
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      if(ext==='csv'){
+        const txt=new TextDecoder('utf-8').decode(new Uint8Array(e.target.result));
+        const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+        const sep=lines[0].includes(';')?';':',';
+        const hdrs=lines[0].split(sep).map(h=>h.replace(/^"|"$/g,'').trim());
+        rawImport=lines.slice(1).filter(l=>l.trim()).map(l=>{
+          const o={};l.split(sep).map((v,i)=>o[hdrs[i]]=(v||'').replace(/^"|"$/g,'').trim());return o;
+        });
+      }else{
+        if(typeof XLSX==='undefined'){xlStatus('❌ Biblioteca XLSX não disponível.','err');return;}
+        // Opções que contornam "Bad compressed size: 0 != N"
+        const wb=XLSX.read(e.target.result,{
+          type:'array',
+          cellStyles:false,
+          cellFormulas:false,
+          sheetStubs:false,
+          WTF:false,
+          dense:false
+        });
+        rawImport=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+        resetColMap();
+      }
+      if(!rawImport.length){xlStatus('❌ Arquivo vazio ou sem dados.','err');return;}
+      const hdrs=Object.keys(rawImport[0]);
+      document.getElementById('xl-head').innerHTML='<tr>'+hdrs.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>';
+      document.getElementById('xl-body').innerHTML=rawImport.slice(0,5).map(r=>'<tr>'+hdrs.map(h=>'<td>'+esc(String(r[h]))+'</td>').join('')+'</tr>').join('');
+      document.getElementById('xl-prev-title').textContent=file.name+' — '+rawImport.length+' registros (mostrando 5)';
+      document.getElementById('xl-preview').style.display='block';
+      xlStatus('✅ '+rawImport.length+' registros lidos. Confirme abaixo.','ok');
+    }catch(err){xlStatus('❌ Erro: '+err.message,'err');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function xlStatus(msg,tipo){
+  const el=document.getElementById('xl-status');
+  el.textContent=msg;el.className='status '+(tipo==='ok'?'s-ok':tipo==='info'?'s-info':'s-err');el.style.display='flex';
+}
+
+async function confirmarImport(){
+  if(!rawImport.length)return;
+  const fc=keys=>Object.keys(rawImport[0]).find(h=>keys.some(k=>h.toLowerCase().includes(k)))||'';
+  const cn=fc(['nome','razao','cliente','name','empresa']);
+  const cd=fc(['cnpj','cpf','doc','documento']);
+  const ce=fc(['email','e-mail','mail']);
+  const cs=fc(['senha','gov','password']);
+  const imp=rawImport.map((r,i)=>({
+    id:Date.now()+i,
+    nome:cn?String(r[cn]).trim():'Cliente '+(i+1),
+    cnpj:cd?String(r[cd]).trim():'',
+    email:ce?String(r[ce]).trim():'',
+    senha:cs?String(r[cs]).trim():'',
+    obs:'Importado',dt:new Date().toLocaleDateString('pt-BR')
+  })).filter(c=>c.nome&&c.nome!=='undefined');
+  imp.forEach(im=>{if(!clientes.find(c=>c.nome===im.nome&&c.cnpj===im.cnpj))clientes.push(im);});
+  salvarClientes();renderClientes();
+
+  // Salva planilha completa no IndexedDB
+  const nomeArq = document.getElementById('xl-prev-title').textContent.split(' — ')[0] || 'Planilha';
+  xlStatus('💾 Salvando planilha no IndexedDB...','info');
+  const ok2 = await salvarPlanilhaDB(rawImport, nomeArq);
+
+  const ok=document.getElementById('xl-ok');
+  ok.textContent='✅ '+imp.length+' clientes importados'+(ok2?' · planilha salva automaticamente':'')+'!';
+  ok.style.display='flex';
+  document.getElementById('xl-preview').style.display='none';
+  xlStatus('✅ Importação concluída.'+(ok2?' Planilha salva — será restaurada na próxima abertura.':''),'ok');
+  // Mostra botão de limpar planilha salva
+  document.getElementById('btn-limpar-db').style.display='inline-flex';
+  atualizarBannerContexto();
+}
+
+async function limparPlanilhaSalva(){
+  if(!confirm('Remover a planilha salva do banco de dados local?')) return;
+  await limparPlanilhaDB();
+  rawImport = [];
+  document.getElementById('xl-preview').style.display='none';
+  document.getElementById('xl-ok').style.display='none';
+  document.getElementById('btn-limpar-db').style.display='none';
+  xlStatus('🗑 Planilha removida do armazenamento local.','info');
+  atualizarBannerContexto();
+}
+
+// FRASES — id único para deleção correta (inclusive frases padrão)
+let frases=JSON.parse(localStorage.getItem('afi_frases')||'null');
+if(!frases){
+  frases=[
+    {id:'default_1',titulo:'Boas-vindas ao escritório',categoria:'boas-vindas',
+     texto:'Olá! Seja bem-vindo(a) ao nosso escritório de contabilidade. Ficamos felizes em tê-lo(a) como cliente. Nossa equipe está à disposição para auxiliar em todas as suas necessidades fiscais e contábeis.',
+     dt:new Date().toLocaleDateString('pt-BR')},
+    {id:'default_2',titulo:'DAS MEI em atraso',categoria:'cobranca',
+     texto:'Identificamos que há DAS MEI em aberto no seu cadastro. Para evitar pendências junto à Receita Federal e possível dívida ativa, solicitamos que realize a regularização o quanto antes. Em caso de dúvidas, entre em contato conosco.',
+     dt:new Date().toLocaleDateString('pt-BR')},
+    {id:'default_3',titulo:'Orientação sobre parcelamento',categoria:'orientacao',
+     texto:'Informamos que é possível realizar o parcelamento dos débitos do Simples Nacional diretamente pelo portal PGMEI (para MEI) ou pelo e-CAC. O parcelamento pode ser feito em até 60 meses, com redução de multa e juros conforme o programa vigente.',
+     dt:new Date().toLocaleDateString('pt-BR')}
+  ];
+  localStorage.setItem('afi_frases',JSON.stringify(frases));
+}
+// Migração: garante id em frases antigas sem id
+frases=frases.map((f,i)=>f.id?f:{...f,id:'mig_'+Date.now()+'_'+i});
+
+const catLabel={cobranca:'💰 Cobrança',regularizacao:'✅ Regularização',orientacao:'📌 Orientação','boas-vindas':'👋 Boas-vindas',outros:'📎 Outros'};
+const catCls={cobranca:'cat-cobranca',regularizacao:'cat-regularizacao',orientacao:'cat-orientacao','boas-vindas':'cat-boas-vindas',outros:'cat-outros'};
+
+function salvarFrases(){
+  localStorage.setItem('afi_frases',JSON.stringify(frases));
+  const n=frases.length;const hdr=document.getElementById('hdr-frases');
+  if(n>0){hdr.textContent=n+' frase'+(n!==1?'s':'');hdr.style.display='inline-flex';}else hdr.style.display='none';
+}
+
+function renderFrases(){
+  const busca=(document.getElementById('fr-busca').value||'').toLowerCase().trim();
+  const filtro=document.getElementById('fr-filtro').value;
+  const lista=document.getElementById('fr-lista');
+  const ct=document.getElementById('fr-count');
+  const filtradas=frases.filter(f=>{
+    const tm=!busca||(f.titulo+f.texto).toLowerCase().includes(busca);
+    const cm=!filtro||f.categoria===filtro;
+    return tm&&cm;
+  });
+  ct.textContent=filtradas.length+' de '+frases.length+' frases';
+  if(!filtradas.length){lista.innerHTML='<div class="empty">'+(frases.length?'Nenhuma frase para este filtro.':'Nenhuma frase salva ainda.')+'</div>';return;}
+  lista.innerHTML=filtradas.map(f=>{
+    const preview=f.texto.length>160?f.texto.slice(0,160)+'...':f.texto;
+    const sid=CSS.escape(f.id);
+    return `<div class="frase-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:13px">${esc(f.titulo)}</span>
+          <span class="cat-tag ${catCls[f.categoria]||'cat-outros'}">${catLabel[f.categoria]||f.categoria}</span>
+          <span style="font-size:10px;color:var(--dim)">${f.dt||''}</span>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn btn-ghost btn-xs" onclick="abrirEditModal('${f.id}')" title="Editar">✏️</button>
+          <button class="btn btn-rd btn-xs"    onclick="deletarFrase('${f.id}')" title="Excluir">🗑</button>
+          <button class="btn btn-or btn-xs"    id="copybtn-${sid}" onclick="copiarFrase('${f.id}')">📋 Copiar</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.65;background:var(--bg);padding:9px 12px;border-radius:7px;border:1px solid var(--border);white-space:pre-wrap" id="prev-${sid}">${esc(preview)}</div>
+      ${f.texto.length>160?`<button onclick="expandirFrase('${f.id}')" style="font-size:10px;color:var(--orm);background:none;border:none;cursor:pointer;margin-top:5px;padding:0">▼ Ver tudo</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function expandirFrase(id){
+  const f=frases.find(x=>x.id===id);if(!f)return;
+  document.getElementById('prev-'+CSS.escape(id)).textContent=f.texto;
+}
+function copiarFrase(id){
+  const f=frases.find(x=>x.id===id);if(!f)return;
+  const btn=document.getElementById('copybtn-'+CSS.escape(id));
+  const done=()=>{btn.textContent='✅ Copiado!';btn.style.background='#2d6a12';setTimeout(()=>{btn.innerHTML='📋 Copiar';btn.style.background='';},2200);};
+  navigator.clipboard?navigator.clipboard.writeText(f.texto).then(done).catch(()=>{fb(f.texto);done();}):(fb(f.texto),done());
+}
+function fb(t){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);}
+
+function salvarFrase(){
+  const titulo=document.getElementById('fr-titulo').value.trim();
+  const texto=document.getElementById('fr-texto').value.trim();
+  const cat=document.getElementById('fr-cat').value;
+  if(!titulo){alert('Preencha o título.');return;}
+  if(!texto){alert('Preencha o texto.');return;}
+  frases.unshift({id:'f_'+Date.now(),titulo,categoria:cat,texto,dt:new Date().toLocaleDateString('pt-BR')});
+  salvarFrases();renderFrases();limparFraseForm();
+}
+function limparFraseForm(){
+  document.getElementById('fr-titulo').value='';
+  document.getElementById('fr-texto').value='';
+  document.getElementById('fr-cat').value='cobranca';
+}
+function deletarFrase(id){
+  const f=frases.find(x=>x.id===id);if(!f)return;
+  if(!confirm('Excluir "'+f.titulo+'"?'))return;
+  frases=frases.filter(x=>x.id!==id);
+  salvarFrases();renderFrases();
+}
+function abrirEditModal(id){
+  const f=frases.find(x=>x.id===id);if(!f)return;
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-titulo').value=f.titulo;
+  document.getElementById('edit-cat').value=f.categoria;
+  document.getElementById('edit-texto').value=f.texto;
+  document.getElementById('modal-edit').classList.add('open');
+}
+function fecharModal(){document.getElementById('modal-edit').classList.remove('open');}
+function salvarEdicao(){
+  const id=document.getElementById('edit-id').value;
+  const f=frases.find(x=>x.id===id);if(!f)return;
+  const t=document.getElementById('edit-titulo').value.trim();
+  const x=document.getElementById('edit-texto').value.trim();
+  if(!t||!x){alert('Título e texto são obrigatórios.');return;}
+  f.titulo=t;f.categoria=document.getElementById('edit-cat').value;f.texto=x;
+  salvarFrases();fecharModal();renderFrases();
+}
+
+document.getElementById('modal-edit').addEventListener('click',e=>{if(e.target===e.currentTarget)fecharModal();});
+document.getElementById('modal-cli').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('modal-cli').classList.remove('open');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharModal();document.getElementById('modal-cli').classList.remove('open');}});
+
+// ──────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+// ASSISTENTE FISCAL INTELIGENTE — 100% JavaScript, sem API
+// ══════════════════════════════════════════════════════════════════
+let chatHistory = [];
+
+// ── Atualiza banner de contexto ──
+function atualizarBannerContexto() {
+  const banner = document.getElementById('ia-ctx-banner');
+  const txt    = document.getElementById('ia-ctx-txt');
+  const total  = (rawImport && rawImport.length) || 0;
+  const cliMan = (clientes && clientes.length) || 0;
+  if (total > 0) {
+    const nomeArq = (typeof ultimoNomeArquivo !== 'undefined' && ultimoNomeArquivo) ? ultimoNomeArquivo : 'planilha importada';
+    txt.textContent = `📊 ${nomeArq} — ${total} registro${total !== 1 ? 's' : ''} carregado${total !== 1 ? 's' : ''}. Pergunte sobre qualquer cliente!`;
+    banner.style.display = 'flex';
+  } else if (cliMan > 0) {
+    txt.textContent = `👤 ${cliMan} cliente(s) cadastrado(s) — pergunte sobre qualquer um!`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// ── Obtém a fonte de dados atual ──
+function getDados() {
+  if (rawImport && rawImport.length > 0) return rawImport;
+  if (clientes  && clientes.length  > 0) return clientes.map(c => ({
+    Nome: c.nome, CNPJ: c.cnpj, CPF: c.cpf, Email: c.email,
+    Título: c.titulo, Observação: c.obs
+  }));
+  return [];
+}
+
+function getColunas(dados) {
+  if (!dados.length) return [];
+  return Object.keys(dados[0]);
+}
+
+// ── Normaliza texto para busca ──
+function norm(s) {
+  return String(s || '').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[\.\-\/\(\)\s]+/g,' ').trim();
+}
+
+// ── Mapeador inteligente de colunas ──────────────────────────────────────────
+// Detecta o que cada coluna representa olhando nome + valores de exemplo
+let _colMapCache = null;
+let _colMapSource = null;
+
+// Mapa fixo da planilha ContaBEAUTY — ordem posicional das colunas
+// Coluna 0: Número da Empresa | 1: Nome da Empresa | 2: Tipo (MEI/SN/LP) | 3: CNPJ
+// 4: Senha Emissor Nacional | 5: Senha Web | 6: CPF | 7: Cód. Acesso
+// 8: CCM | 9: Prefeitura | 10: Data de Nascimento
+const MAPA_FIXO_CONTABEAUTY = [
+  'Nº Empresa',
+  'Nome da Empresa',
+  'Tipo (Regime)',
+  'CNPJ',
+  'Senha Emissor Nacional',
+  'Senha Web',
+  'CPF',
+  'Cód. de Acesso',
+  'CCM',
+  'Prefeitura',
+  'Data de Nascimento',
+];
+
+function buildColMap(dados) {
+  if (!dados || !dados.length) return {};
+  if (_colMapSource === dados) return _colMapCache;
+  _colMapSource = dados;
+
+  const hdrs = Object.keys(dados[0]);
+  const amostra = dados.slice(0, 30);
+  const map = {};
+
+  // ── 1. Detecta se é a planilha ContaBEAUTY pela 1ª coluna ──────────────────
+  // A primeira coluna real costuma ter números de empresa (inteiros curtos)
+  // e a segunda ter nomes de empresa (strings com palavras)
+  const primeiroValor = String(Object.values(amostra[0] || {})[0] || '').trim();
+  const segundoValor  = String(Object.values(amostra[0] || {})[1] || '').trim();
+  const pareceContaBeauty =
+    /^\d{1,4}$/.test(primeiroValor) ||                      // col 0 = número
+    /[a-zA-Z]{3}/.test(segundoValor);                       // col 1 = nome
+
+  if (pareceContaBeauty) {
+    // Usa mapa posicional fixo
+    hdrs.forEach((h, i) => {
+      map[h] = MAPA_FIXO_CONTABEAUTY[i] || h;
+    });
+    _colMapCache = map;
+    return map;
+  }
+
+  // ── 2. Fallback: detecção inteligente por nome + valores ───────────────────
+  const valoresPorColuna = {};
+  hdrs.forEach(h => {
+    valoresPorColuna[h] = amostra
+      .map(r => String(r[h] || '').trim())
+      .filter(v => v && v !== '—');
+  });
+
+  hdrs.forEach(h => {
+    const vals = valoresPorColuna[h];
+    const isGenerico = /^__empty|^col\d|^field\d|^coluna\d/i.test(h.trim());
+
+    if (!isGenerico) {
+      const nomeRe = [
+        [/nome|razao|empresa|cliente/i,       'Nome / Razão Social'],
+        [/cnpj/i,                              'CNPJ'],
+        [/cpf/i,                               'CPF'],
+        [/regime|tribut/i,                     'Regime Tributário'],
+        [/senha/i,                             'Senha'],
+        [/login|usuario/i,                     'Login'],
+        [/email|e.mail/i,                      'E-mail'],
+        [/tel|fone|celular/i,                  'Telefone'],
+        [/cod|codigo|acesso/i,                 'Cód. Acesso'],
+        [/ccm/i,                               'CCM'],
+        [/prefeitura|municipio|cidade/i,       'Prefeitura'],
+        [/nasc|nascimento/i,                   'Data de Nascimento'],
+        [/data|abertura/i,                     'Data'],
+        [/obs|observa/i,                       'Observação'],
+      ];
+      for (const [re, label] of nomeRe) {
+        if (re.test(h)) { map[h] = label; return; }
+      }
+    }
+
+    if (vals.length > 0) {
+      if (vals.some(v => /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/.test(v))) { map[h] = 'CNPJ'; return; }
+      if (vals.some(v => /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(v)))           { map[h] = 'CPF'; return; }
+      if (vals.some(v => /^(mei|simples nacional|lucro presumido|lucro real)$/i.test(v))) { map[h] = 'Regime Tributário'; return; }
+      if (vals.some(v => /@\w+\.\w+/.test(v)))                                    { map[h] = 'E-mail'; return; }
+      if (vals.length > 2 && vals.every(v => /^\d+$/.test(v)))                     { map[h] = 'Código'; return; }
+    }
+
+    map[h] = h;
+  });
+
+  _colMapCache = map;
+  return map;
+}
+
+// Reseta cache ao importar nova planilha
+function resetColMap() { _colMapCache = null; _colMapSource = null; }
+// ────────────────────────────────────────────────────────────────────────────
+
+// ── Busca registros que contêm o termo em qualquer coluna ──
+function buscarRegistros(dados, termo) {
+  const t = norm(termo);
+  if (!t) return dados;
+  return dados.filter(r =>
+    Object.values(r).some(v => norm(v).includes(t))
+  );
+}
+
+// ── Formata um registro como texto legível com rótulos limpos ──
+function formatarRegistro(r, idx, colMap) {
+  const map = colMap || {};
+  const linhas = Object.entries(r)
+    .filter(([k,v]) => v !== undefined && v !== null && String(v).trim() !== '' && String(v) !== '—')
+    .map(([k,v]) => {
+      const label = map[k] && map[k] !== k ? map[k] : k;
+      return `  ${label}: ${v}`;
+    })
+    .join('\n');
+  return `[${idx+1}]\n${linhas}`;
+}
+
+// ── Extrai nome de pessoa/empresa da pergunta ──
+// ── Extrai nome de pessoa/empresa da pergunta ──
+function extrairNome(q) {
+  let limpo = norm(q).replace(/\?|!/g, '');
+  const tokens = ['qual','quais','me','diga','fala','mostra','mostre','encontra',
+    'encontre','achar','acha','busca','busque','ver','veja','do','da','de','dos',
+    'das','o','a','os','as','e','cnpj','cpf','email','telefone','regime','status',
+    'situacao','dados','info','registro','cliente','empresa','nome','voce','você',
+    'preciso','quero','saber','por','favor','pf','qual','é','o'];
+  tokens.forEach(t => {
+    const re = new RegExp('(?<![\\w])' + t.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&') + '(?![\\w])', 'gi');
+    limpo = limpo.replace(re, ' ');
+  });
+  limpo = limpo.replace(/\\s{2,}/g, ' ').trim();
+  return limpo.length >= 2 ? limpo : null;
+}
+
+// ── Identifica o tipo de pergunta ──
+function classificarPergunta(q) {
+  const n = norm(q);
+  // Padrões sobre dados da planilha
+  if (/listar?|todos|lista|relação|relacao|mostrar? todos/.test(n)) return 'LISTAR_TODOS';
+  if (/quantos?|total|quantidade|número|numero/.test(n)) return 'CONTAR';
+  if (/resumo|geral|visão geral|visao geral|overview/.test(n)) return 'RESUMO';
+  if (/cnpj/.test(n) && !/o que|como|regra|obrigação/.test(n)) return 'BUSCAR_CNPJ';
+  if (/cpf/.test(n)  && !/o que|como|regra|obrigação/.test(n)) return 'BUSCAR_CPF';
+  if (/email|e-mail/.test(n) && !/o que|como/.test(n)) return 'BUSCAR_EMAIL';
+  if (/mei/.test(n) && !/o que|como|o mei|regra|limite|faturamento|vantagem|desvantagem/.test(n)) return 'FILTRAR_MEI';
+  if (/simples nacional/.test(n) && /cliente|listar|quem/.test(n)) return 'FILTRAR_SIMPLES';
+  if (/atraso|atrasado|inadimplente|em atraso|em dia/.test(n) && !/o que|como|regra/.test(n)) return 'FILTRAR_ATRASO';
+  if (/dívida ativa|divida ativa/.test(n) && !/o que|como/.test(n)) return 'FILTRAR_DIVIDA';
+  if (/regime/.test(n) && /cliente|listar|quem/.test(n)) return 'FILTRAR_REGIME';
+  if (/coluna|campo|campo/.test(n)) return 'VER_COLUNAS';
+  // Perguntas gerais sobre fiscalidade (sem planilha necessária)
+  if (/das mei|guia mei/.test(n)) return 'INFO_DAS_MEI';
+  if (/dívida ativa|divida ativa/.test(n)) return 'INFO_DIVIDA_ATIVA';
+  if (/parcelamento/.test(n)) return 'INFO_PARCELAMENTO';
+  if (/irpf|imposto de renda/.test(n)) return 'INFO_IRPF';
+  if (/mei/.test(n)) return 'INFO_MEI';
+  if (/simples nacional/.test(n)) return 'INFO_SIMPLES';
+  if (/nf|nota fiscal|nfse|nfe/.test(n)) return 'INFO_NF';
+  if (/defis/.test(n)) return 'INFO_DEFIS';
+  if (/prazo|vencimento|data/.test(n)) return 'INFO_PRAZOS';
+  // Busca genérica por nome
+  return 'BUSCAR_NOME';
+}
+
+// ── Encontra coluna pelo tipo ──
+function acharColuna(dados, tipos) {
+  if (!dados.length) return null;
+  const hdrs = Object.keys(dados[0]);
+  for (const t of tipos) {
+    const col = hdrs.find(h => norm(h).includes(t));
+    if (col) return col;
+  }
+  return null;
+}
+
+// ── Resposta principal do assistente ──
+function responderAssistente(pergunta) {
+  const q    = pergunta.trim();
+  const qn   = norm(q);
+  const dados = getDados();
+  const tipo  = classificarPergunta(q);
+  const temDados = dados.length > 0;
+  const hdrs = getColunas(dados);
+  const colMap = buildColMap(dados);
+
+  // ───────────── CONHECIMENTO FISCAL EMBUTIDO ─────────────
+  const baseConhecimento = {
+    INFO_DAS_MEI: `📋 **DAS MEI — Documento de Arrecadação do Simples Nacional**
+
+O DAS MEI é a guia mensal de pagamento do Microempreendedor Individual.
+
+💰 **Valores mensais (2026):**
+• Comércio/Indústria: R$ 76,90 (INSS 5% + ICMS R$ 1,00)
+• Serviços: R$ 80,90 (INSS 5% + ISS R$ 5,00)
+• Comércio + Serviços: R$ 81,90
+
+📅 **Vencimento:** Dia 20 de cada mês
+🔗 **Portal:** gov.br/PGMEI
+
+⚠️ **Atraso gera:**
+• Multa de 0,33% ao dia (limite 20%)
+• Juros pela Taxa SELIC
+• Risco de exclusão do MEI
+
+✅ **Parcelar atrasos:** PGMEI → opção parcelamento → até 60x`,
+
+    INFO_DIVIDA_ATIVA: `⚠️ **Dívida Ativa da União**
+
+É o conjunto de débitos tributários não pagos, inscritos após esgotamento das cobranças administrativas.
+
+**Consequências:**
+• Protesto em cartório
+• Bloqueio judicial de bens e contas (SISBAJUD)
+• Restrição de certidões negativas
+• Impossibilidade de contratar com o governo
+
+**Como regularizar:**
+1. Consultar débitos: portalspfe.pgfn.gov.br
+2. Parcelar: REGULARIZE (regularize.pgfn.gov.br)
+   → Até 60x, redução de até 100% de multas em programas especiais
+3. Transação tributária: negociação individualizada para dívidas > R$ 15 milhões
+
+**Certidão Negativa:** Emitir em certidoes.receita.fazenda.gov.br`,
+
+    INFO_PARCELAMENTO: `💳 **Parcelamento — Simples Nacional e MEI**
+
+**MEI (PGMEI):**
+• Acesse: gov.br/PGMEI
+• Até 60 parcelas mensais
+• Parcela mínima: R$ 50,00
+• Juros: SELIC + 1% ao mês
+
+**Simples Nacional (e-CAC):**
+• Acesse: eCAC → "Parcelamento"
+• Até 60 meses
+• Parcela mínima: R$ 300,00
+• Entrada: mínimo 5% do total
+
+**PGFN (dívida ativa):**
+• Portal REGULARIZE
+• Desconto de multas e juros conforme o programa
+• Até 60x para casos gerais
+• REFIS/PERT quando disponíveis: condições especiais
+
+⚠️ Em parcelamento ativo, o CNPJ mantém certidão positiva com efeito de negativa.`,
+
+    INFO_IRPF: `📄 **IRPF 2026 — Imposto de Renda Pessoa Física**
+
+**Prazo de entrega:** Geralmente até 30 de maio
+**Declaração obrigatória se em 2025:**
+• Rendimentos tributáveis > R$ 33.888,00
+• Ganho de capital na venda de bens
+• Atividade rural com receita > R$ 169.440,00
+• Bens > R$ 800.000,00 em 31/12
+
+**Modelos:**
+• Simplificado: desconto padrão de 20% (limite R$ 16.754,34)
+• Completo: deduz despesas reais (saúde, educação, dependentes)
+
+**Documentos necessários:**
+Informe de rendimentos, notas médicas, recibos de educação, comprovantes de bens e direitos.
+
+**Multa por atraso:** R$ 165,74 a 20% do imposto devido.`,
+
+    INFO_MEI: `🏪 **MEI — Microempreendedor Individual**
+
+**Limite de faturamento:** R$ 81.000,00/ano (R$ 6.750,00/mês)
+**Pode ter:** 1 funcionário com salário mínimo ou piso da categoria
+**Não pode:** ter sócio, ser sócio em outra empresa, ser servidor público ativo
+
+**Obrigações mensais:**
+• Pagar DAS MEI até dia 20
+• DASN-SIMEI anual (declaração até 31/maio do ano seguinte)
+
+**Benefícios:**
+• Aposentadoria por idade/invalidez
+• Auxílio-doença, salário-maternidade
+• Pensão por morte (para dependentes)
+
+**Quando migrar para ME:**
+• Faturamento ultrapassar R$ 81.000/ano → migração obrigatória para Simples
+• Precisar de mais de 1 funcionário`,
+
+    INFO_SIMPLES: `📊 **Simples Nacional**
+
+Regime unificado que recolhe vários impostos em uma guia (DAS).
+
+**Limites:** Até R$ 4,8 milhões/ano
+**Anexos e alíquotas:** De 4% (comércio) a 33% (alguns serviços)
+**Período de apuração:** Mensal
+
+**Obrigações:**
+• PGDAS-D: apuração mensal até dia 20
+• DEFIS: declaração anual (julho do ano seguinte)
+• DASN-SIMEI: apenas para MEI
+
+**Exclusão automática se:**
+• Faturamento > R$ 4,8M no ano
+• Débitos em aberto sem parcelamento
+• Atividade vedada ao Simples`,
+
+    INFO_NF: `🧾 **Nota Fiscal — NFS-e e NF-e**
+
+**NFS-e (Serviço):**
+• Emitida no portal da prefeitura do município
+• ISS retido: varia de 2% a 5% conforme cidade
+• SP: nfse.prefeitura.sp.gov.br
+• RJ: notacarioca.rio.rj.gov.br
+
+**NF-e (Produto):**
+• Emitida pela SEFAZ estadual
+• Requer certificado digital A1 ou A3
+• ICMS: varia por estado e produto
+
+**Cancelamento:**
+• NFS-e: consultar regras do município (geralmente até 24h ou 7 dias)
+• NF-e: até 24h após autorização, se não houver circulação`,
+
+    INFO_DEFIS: `📋 **DEFIS — Declaração de Informações Socioeconômicas e Fiscais**
+
+Obrigação anual de todas as empresas do Simples Nacional (exceto MEI).
+
+**Prazo:** 31 de julho do ano-calendário seguinte
+  Ex.: DEFIS 2025 → até 31/07/2026
+
+**O que informa:**
+• Receitas por tipo (tributável, não tributável, exportação)
+• Informações de sócios
+• Número de empregados
+
+**Entrega:** Portal do Simples Nacional (8.receita.fazenda.gov.br)
+**Multa por atraso:** R$ 500,00 (ou 2% do faturamento, o que for maior)`,
+
+    INFO_PRAZOS: `📅 **Principais Prazos Fiscais — 2026**
+
+• DAS MEI: todo dia 20 do mês
+• PGDAS-D (Simples): todo dia 20 do mês
+• DASN-SIMEI (MEI): até 31 de maio/2026 (ano-base 2025)
+• IRPF: geralmente até 30 de maio/2026
+• DEFIS: até 31 de julho/2026 (ano-base 2025)
+• ECF (Lucro Real/Presumido): julho/2026
+• ECD (escrituração digital): julho/2026`
+  };
+
+  if (baseConhecimento[tipo]) {
+    return baseConhecimento[tipo];
+  }
+
+  // ───────────── RESPOSTAS COM DADOS DA PLANILHA ─────────────
+  if (!temDados) {
+    return `Não encontrei uma planilha importada ainda.
+
+` +
+      `Para consultar dados de clientes, vá até a aba **Planilha**, importe seu arquivo .xlsx ou .csv e volte aqui para perguntar.
+
+` +
+      `Se quiser, posso responder perguntas sobre DAS MEI, IRPF, parcelamentos, dívida ativa e outros temas fiscais!`;
+  }
+
+  // LISTAR TODOS
+  if (tipo === 'LISTAR_TODOS') {
+    const colNome = acharColuna(dados, ['nome','razao','cliente','name']);
+    const colDoc  = acharColuna(dados, ['cnpj','cpf','doc']);
+    if (!colNome) return `Planilha carregada com ${dados.length} registros, mas não encontrei uma coluna de nome. Colunas disponíveis: ${hdrs.join(', ')}`;
+    const lista = dados.slice(0, 50).map((r,i) => {
+      const nome = r[colNome] || '—';
+      const doc  = colDoc ? (r[colDoc] || '—') : '';
+      return `${i+1}. ${nome}${doc ? ' · ' + doc : ''}`;
+    }).join('\n');
+    const resto = dados.length > 50 ? `
+
+... e mais ${dados.length - 50} registros. Refine sua busca para ver mais.` : '';
+    return `📋 **${dados.length} clientes na planilha:**
+
+${lista}${resto}`;
+  }
+
+  // CONTAR
+  if (tipo === 'CONTAR') {
+    return `📊 Sua planilha tem **${dados.length} registros** com as colunas: ${hdrs.join(', ')}.`;
+  }
+
+  // RESUMO
+  if (tipo === 'RESUMO') {
+    const colNome   = acharColuna(dados, ['nome','razao','cliente']);
+    const colRegime = acharColuna(dados, ['regime','tributario','tributário','tipo']);
+    const colSit    = acharColuna(dados, ['situacao','situação','status','ativo']);
+    let resumo = `📊 **Resumo da planilha:**
+• Total de registros: ${dados.length}
+• Colunas: ${hdrs.join(', ')}
+`;
+    if (colRegime) {
+      const contagem = {};
+      dados.forEach(r => { const v = String(r[colRegime]||'Não informado').trim(); contagem[v] = (contagem[v]||0)+1; });
+      resumo += `
+**Por regime:**
+` + Object.entries(contagem).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v}`).join('\n');
+    }
+    if (colSit) {
+      const contagem = {};
+      dados.forEach(r => { const v = String(r[colSit]||'Não informado').trim(); contagem[v] = (contagem[v]||0)+1; });
+      resumo += `
+**Por situação:**
+` + Object.entries(contagem).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`  • ${k}: ${v}`).join('\n');
+    }
+    return resumo;
+  }
+
+  // VER COLUNAS
+  if (tipo === 'VER_COLUNAS') {
+    return `📋 **Colunas da sua planilha (${dados.length} registros):**
+
+` +
+      hdrs.map((h,i) => {
+        const vals = dados.slice(0,3).map(r=>r[h]).filter(v=>v&&String(v).trim()).join(', ');
+        return `${i+1}. **${h}** — ex: ${vals || '(vazio)'}`;
+      }).join('\n');
+  }
+
+  // BUSCAR CNPJ específico
+  if (tipo === 'BUSCAR_CNPJ') {
+    const cnpjMatch = q.match(/\d{2}[\.\s]?\d{3}[\.\s]?\d{3}[\.\s\/]?\d{4}[\-\s]?\d{2}/);
+    if (cnpjMatch) {
+      const cnpjBusca = cnpjMatch[0].replace(/\D/g,'');
+      const colCnpj = acharColuna(dados, ['cnpj']);
+      if (colCnpj) {
+        const res = dados.filter(r => String(r[colCnpj]).replace(/\D/g,'') === cnpjBusca);
+        if (res.length) return `✅ **Encontrado:**
+
+${res.map((r,i)=>formatarRegistro(r,i,colMap)).join('\n\n')}`;
+        return `❌ CNPJ ${cnpjMatch[0]} não encontrado na planilha.`;
+      }
+    }
+    // Busca textual pelo termo CNPJ
+    const colCnpj = acharColuna(dados, ['cnpj','doc','documento']);
+    const nome = extrairNome(q);
+    if (nome && nome.length >= 2) {
+      const res = buscarRegistros(dados, nome);
+      if (res.length) {
+        return `🔍 **Resultado para "${nome}":**
+
+${res.slice(0,5).map((r,i)=>formatarRegistro(r,i,colMap)).join('\n\n')}`;
+      }
+      return `❌ Nenhum cliente encontrado com "${nome}". Verifique o nome ou tente parte do nome.`;
+    }
+  }
+
+  // FILTRAR MEI
+  if (tipo === 'FILTRAR_MEI') {
+    const colRegime = acharColuna(dados, ['regime','tributario','tributário','tipo']);
+    if (!colRegime) return `Não encontrei uma coluna de regime tributário na planilha. Colunas disponíveis: ${hdrs.join(', ')}`;
+    const meis = dados.filter(r => norm(r[colRegime]).includes('mei'));
+    if (!meis.length) return `Não encontrei clientes MEI na coluna "${colRegime}".`;
+    const colNome = acharColuna(dados, ['nome','razao','cliente']);
+    const lista = meis.slice(0,30).map((r,i)=>`${i+1}. ${colNome?r[colNome]:JSON.stringify(r)}`).join('\n');
+    return `🏪 **${meis.length} cliente(s) MEI:**
+
+${lista}${meis.length>30?`
+... e mais ${meis.length-30}.`:''}`;
+  }
+
+  // FILTRAR SIMPLES NACIONAL
+  if (tipo === 'FILTRAR_SIMPLES') {
+    const colRegime = acharColuna(dados, ['regime','tributario','tributário','tipo']);
+    if (!colRegime) return `Não encontrei coluna de regime. Colunas: ${hdrs.join(', ')}`;
+    const res = dados.filter(r => norm(r[colRegime]).includes('simples'));
+    const colNome = acharColuna(dados, ['nome','razao','cliente']);
+    const lista = res.slice(0,30).map((r,i)=>`${i+1}. ${colNome?r[colNome]:JSON.stringify(r)}`).join('\n');
+    return res.length
+      ? `📊 **${res.length} cliente(s) Simples Nacional:**
+
+${lista}`
+      : `Nenhum cliente com "Simples Nacional" na coluna "${colRegime}".`;
+  }
+
+  // FILTRAR ATRASO
+  if (tipo === 'FILTRAR_ATRASO') {
+    const colSit = acharColuna(dados, ['atraso','situacao','situação','status','inadimplente','pagamento']);
+    if (!colSit) return `Não encontrei coluna de situação/atraso. Colunas: ${hdrs.join(', ')}`;
+    const res = dados.filter(r => /atras|inadimpl|pendent|aberto/i.test(String(r[colSit]||'')));
+    const colNome = acharColuna(dados, ['nome','razao','cliente']);
+    if (!res.length) return `✅ Nenhum cliente com situação de atraso encontrado na coluna "${colSit}".`;
+    const lista = res.slice(0,30).map((r,i)=>`${i+1}. ${colNome?r[colNome]:'—'} — ${r[colSit]}`).join('\n');
+    return `⚠️ **${res.length} cliente(s) em atraso:**
+
+${lista}`;
+  }
+
+  // FILTRAR DÍVIDA ATIVA
+  if (tipo === 'FILTRAR_DIVIDA') {
+    const colSit = acharColuna(dados, ['divida','dívida','situacao','situação','status']);
+    if (!colSit) return `Não encontrei coluna de dívida/situação. Colunas: ${hdrs.join(', ')}`;
+    const res = dados.filter(r => /divida|dívida|inscri/i.test(String(r[colSit]||'')));
+    const colNome = acharColuna(dados, ['nome','razao','cliente']);
+    if (!res.length) return `✅ Nenhum cliente com dívida ativa identificada na coluna "${colSit}".`;
+    const lista = res.slice(0,20).map((r,i)=>`${i+1}. ${colNome?r[colNome]:'—'} — ${r[colSit]}`).join('\n');
+    return `⚠️ **${res.length} cliente(s) com dívida ativa:**
+
+${lista}`;
+  }
+
+  // BUSCAR NOME (busca genérica inteligente)
+  if (tipo === 'BUSCAR_NOME') {
+    const nomeExtraido = extrairNome(q);
+    if (!nomeExtraido) {
+      return `Não entendi a pergunta. Tente ser mais específico, por exemplo:\n• "Qual o CNPJ de Maria Santos"\n• "Listar clientes MEI"\n• "O que é DAS MEI?"`;
+    }
+
+    // 1. Busca pela frase completa primeiro
+    let resultados = buscarRegistros(dados, nomeExtraido);
+
+    // 2. Se não achou, tenta cada palavra com 3+ chars
+    if (!resultados.length) {
+      const termos = nomeExtraido.split(/\s+/).filter(w => w.length >= 3);
+      for (const termo of termos) {
+        const res = buscarRegistros(dados, termo);
+        res.forEach(r => { if (!resultados.includes(r)) resultados.push(r); });
+      }
+    }
+
+    if (!resultados.length) {
+      return `❌ Nenhum resultado para "${termos.join(' ')}" na planilha.
+
+Tente pesquisar por: nome, CNPJ, CPF, email ou qualquer dado que esteja nas colunas: ${hdrs.join(', ')}`;
+    }
+
+    if (resultados.length === 1) {
+      return `✅ **1 registro encontrado:**
+
+${formatarRegistro(resultados[0], 0, colMap)}`;
+    }
+
+    if (resultados.length <= 5) {
+      return `🔍 **${resultados.length} registros encontrados:**
+
+${resultados.map((r,i)=>formatarRegistro(r,i,colMap)).join('\n\n')}`;
+    }
+
+    // Muitos resultados — mostra resumo + opção de refinar
+    const colNome = acharColuna(dados, ['nome','razao','cliente','name']);
+    const preview = resultados.slice(0,10).map((r,i)=>`${i+1}. ${colNome?r[colNome]:Object.values(r).slice(0,2).join(' | ')}`).join('\n');
+    return `🔍 **${resultados.length} registros encontrados** — mostrando os 10 primeiros:
+
+${preview}
+
+Para ver todos os dados de um cliente específico, pergunte pelo nome completo ou CNPJ.`;
+  }
+
+  return `Não entendi sua pergunta. Tente perguntar:
+• O nome ou CNPJ de um cliente
+• "Listar todos os clientes"
+• "Quem está em atraso?"
+• "Clientes MEI"
+• "O que é DAS MEI?"`;
+}
+
+// ── Interface do chat ──
+function enviarIA() {
+  const inp = document.getElementById('ia-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+
+  addMsg(txt, 'user');
+  inp.value = '';
+
+  const btn = document.getElementById('ia-send-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳';
+
+  // Simula "digitando" por um breve instante (UX)
+  setTimeout(() => {
+    try {
+      const resposta = responderAssistente(txt);
+      addMsg(resposta, 'bot');
+    } catch(e) {
+      addMsg('❌ Erro interno: ' + e.message, 'bot');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Enviar ↵';
+  }, 120);
+}
+
+function enviarSug(txt) {
+  document.getElementById('ia-input').value = txt;
+  setTab('ia');
+  enviarIA();
+}
+
+function addMsg(txt, tipo) {
+  const area = document.getElementById('chat-area');
+  const d = document.createElement('div');
+  d.className = tipo === 'user' ? 'msg-user' : 'msg-bot';
+  d.style.whiteSpace = 'pre-wrap';
+  // Renderiza **negrito** simples
+  d.innerHTML = txt.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').split('\n').join('<br>');
+  area.appendChild(d);
+  area.scrollTop = area.scrollHeight;
+}
+
+function limparChat() {
+  document.getElementById('chat-area').innerHTML =
+    '<div class="msg-bot" style="white-space:pre-wrap">Chat limpo. Como posso ajudar?</div>';
+}
+
+
+// UTIL
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function hoje(){return new Date().toISOString().slice(0,10);}
+function baixar(c,n,t){const b=new Blob([c],{type:t});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();}
+
+// ──────────────────────────────────────
+// INDEXEDDB — armazenamento da planilha
+// ──────────────────────────────────────
+const DB_NAME = 'smart-contability_db';
+const DB_VERSION = 1;
+const STORE_PLANILHA = 'planilha';
+let db = null;
+
+function abrirDB() {
+  return new Promise((resolve, reject) => {
+    if (db) { resolve(db); return; }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = function(e) {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains(STORE_PLANILHA)) {
+        database.createObjectStore(STORE_PLANILHA, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = function(e) { db = e.target.result; resolve(db); };
+    req.onerror   = function(e) { reject(e.target.error); };
+  });
+}
+
+async function salvarPlanilhaDB(dados, nomeArquivo) {
+  try {
+    const database = await abrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = database.transaction(STORE_PLANILHA, 'readwrite');
+      const store = tx.objectStore(STORE_PLANILHA);
+      store.put({ id: 'planilha_principal', dados, nomeArquivo, dt: new Date().toISOString() });
+      tx.oncomplete = () => resolve(true);
+      tx.onerror    = (e) => reject(e.target.error);
+    });
+  } catch(e) {
+    console.warn('IndexedDB salvar erro:', e);
+    return false;
+  }
+}
+
+async function carregarPlanilhaDB() {
+  try {
+    const database = await abrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = database.transaction(STORE_PLANILHA, 'readonly');
+      const store = tx.objectStore(STORE_PLANILHA);
+      const req = store.get('planilha_principal');
+      req.onsuccess = (e) => resolve(e.target.result || null);
+      req.onerror   = (e) => reject(e.target.error);
+    });
+  } catch(e) {
+    console.warn('IndexedDB carregar erro:', e);
+    return null;
+  }
+}
+
+async function limparPlanilhaDB() {
+  try {
+    const database = await abrirDB();
+    return new Promise((resolve) => {
+      const tx = database.transaction(STORE_PLANILHA, 'readwrite');
+      tx.objectStore(STORE_PLANILHA).delete('planilha_principal');
+      tx.oncomplete = () => resolve(true);
+    });
+  } catch(e) { return false; }
+}
+
+// INIT
+async function inicializar() {
+  renderClientes();
+  renderFrases();
+  salvarFrases();
+  salvarClientes();
+
+  // Chave API removida — assistente funciona sem API
+
+  // Restaura planilha do IndexedDB
+  xlStatus('⏳ Verificando planilha salva...', 'info');
+  const salva = await carregarPlanilhaDB();
+  if (salva && salva.dados && salva.dados.length) {
+    rawImport = salva.dados;
+    ultimoNomeArquivo = salva.nomeArquivo || 'Planilha';
+    const hdrs = Object.keys(rawImport[0]);
+    document.getElementById('xl-head').innerHTML = '<tr>'+hdrs.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>';
+    document.getElementById('xl-body').innerHTML = rawImport.slice(0,5).map(r=>'<tr>'+hdrs.map(h=>'<td>'+esc(String(r[h]))+'</td>').join('')+'</tr>').join('');
+    document.getElementById('xl-prev-title').textContent = (salva.nomeArquivo||'Planilha') + ' — ' + rawImport.length + ' registros (salva em ' + new Date(salva.dt).toLocaleDateString('pt-BR') + ')';
+    document.getElementById('xl-preview').style.display = 'block';
+    xlStatus('✅ Planilha restaurada automaticamente: '+rawImport.length+' registros.', 'ok');
+    atualizarBannerContexto();
+  } else {
+    document.getElementById('xl-status').style.display = 'none';
+  }
+}
+
+inicializar();
+</script>
+</body>
+</html>
