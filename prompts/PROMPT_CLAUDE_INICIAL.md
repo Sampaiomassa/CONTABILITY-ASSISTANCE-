@@ -10,10 +10,8 @@ Leia primeiro:
 
 Regras obrigatórias:
 
-- O Assistente Contábil deve funcionar por conta própria.
-- O JARVIS é apenas camada opcional/premium de IA, automação e apoio.
-- Não mover código para o repositório JARVIS.
-- Não inserir nenhum código do JARVIS neste repositório além de integração via API quando solicitado.
+- O Assistente Contábil é um projeto 100% independente: não depende de nenhuma IA, API externa ou serviço de terceiros para funcionar.
+- Se o produto ganhar futuramente um chatbox ou recurso de IA, ele entra apenas como um campo de configuração onde o cliente cadastra quantas API keys quiser, das ferramentas que já tiver à disposição. Isso nunca é pré-requisito para o funcionamento do produto.
 - Não armazenar senha GOV.br, e-CAC, prefeitura ou credenciais sensíveis.
 - Não hardcodar API keys.
 - Não fazer refatoração gigante sem análise prévia.

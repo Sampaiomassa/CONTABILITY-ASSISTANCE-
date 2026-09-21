@@ -1,15 +1,25 @@
 # Assistente Contábil
 
-Software operacional para escritórios de contabilidade, funcional por conta própria, com integração opcional/premium ao JARVIS.
+Software operacional para escritórios de contabilidade e firmas pequenas — **independente e autossuficiente**. Não depende de nenhuma IA externa, API ou serviço de terceiros para funcionar.
+
+## Proposta
+
+Organizar a rotina da contabilidade antes dela chegar ao sistema oficial de escrituração: clientes, documentos, pendências, guias, débitos e cobranças — reconhecendo padrões automaticamente (tributos, vencimentos, valores) a partir do que o cliente manda (prints, boletos, PDFs, planilhas).
+
+Frase guia:
+
+> O Assistente Contábil organiza a bagunça do cliente antes dela virar trabalho manual do escritório.
+
+Contexto de mercado: a partir de 2026 começa a transição da Reforma Tributária (IBS/CBS), trazendo mudanças relevantes nas obrigações fiscais. Isso deve gerar forte demanda por ferramentas que ajudem escritórios pequenos e firmas a se organizarem e se adaptarem rápido. O produto deve estar pronto para capturar essa demanda.
 
 ## Regra principal
 
-O Assistente Contábil é um projeto independente do JARVIS.
+O Assistente Contábil é um projeto 100% independente.
 
-- O repositório JARVIS não deve receber código deste app.
-- Este app pode consumir o JARVIS via API segura.
-- O sistema deve funcionar sem JARVIS nas rotinas básicas.
-- O JARVIS entra como camada opcional de IA, análise, automação e apoio.
+- Nenhuma funcionalidade essencial depende de API, IA ou serviço externo.
+- Reconhecimento de documentos, organização, checklists e exportações rodam localmente.
+- Se no futuro o produto ganhar algum recurso de chat/IA, ele é opcional: apenas um campo de configuração onde a contabilidade cadastra quantas API keys quiser, de qualquer serviço que já tenha à disposição. Sem hub, sem projeto de terceiros embutido, sem dependência de nenhum fornecedor específico.
+- Nenhum fornecedor de IA específico é parte da arquitetura do Assistente Contábil.
 
 ## Arquivos iniciais
 
@@ -20,24 +30,67 @@ O Assistente Contábil é um projeto independente do JARVIS.
 
 ## Objetivo do MVP
 
-Criar uma central funcional para contabilidades com:
+Criar uma central funcional para contabilidades e firmas pequenas com:
 
 - cadastro de contabilidades;
 - cadastro de clientes;
-- documentos por cliente;
+- documentos por cliente, com reconhecimento automático de padrões (tributo, valor, vencimento, status);
 - pendências;
 - guias e débitos;
 - checklists;
 - mensagens prontas;
 - relatórios/exportações;
-- separação entre contabilidades;
-- integração opcional com JARVIS.
+- separação entre contabilidades (multiempresa);
+- campo opcional de configuração de API keys do cliente, para uso futuro em recursos de chat/IA, caso implementados.
 
 ## Segurança obrigatória
 
 - Não armazenar senha GOV.br, e-CAC, prefeitura ou qualquer credencial sensível.
 - Não hardcodar API keys.
 - Não misturar dados entre contabilidades.
-- Não depender do JARVIS para as funções básicas.
 - Não vender como substituto do Domínio.
 
+## Como é distribuído
+
+O Assistente Contábil é um **programa de computador (Windows)**, não um site. `index.html` continua sendo o coração do sistema (toda a lógica roda ali dentro), mas ele é empacotado com Electron para virar um instalador `.exe` de verdade:
+
+- instala como qualquer programa (assistente de instalação, atalho no menu iniciar/área de trabalho);
+- aparece em "Adicionar ou remover programas" do Windows, com desinstalação normal;
+- roda 100% offline — todas as bibliotecas (planilha, PDF, leitura de boleto por OCR) ficam dentro do próprio instalador, em `vendor/`, nada é buscado de CDN externo.
+
+Arquivos da parte de empacotamento:
+
+- `main.js` — processo principal do Electron (abre a janela do programa).
+- `package.json` — configuração do instalador (nome, ícone, versão, gerador NSIS para Windows).
+- `vendor/` — bibliotecas de terceiros (XLSX, jsPDF, pdf.js, Tesseract.js + dados de OCR em português) vendorizadas localmente.
+- `.github/workflows/build-windows.yml` — gera o instalador `.exe` automaticamente a cada atualização (GitHub Actions, grátis), disponível para download em "Actions" → build → artifacts, ou anexado a uma Release do repositório.
+
+Para gerar o instalador manualmente (com Node.js instalado):
+
+```
+npm install
+npm run dist
+```
+
+O `.exe` final aparece em `dist/`.
+
+## Estado atual (MVP local, `index.html`)
+
+Implementado e funcional, 100% no navegador/desktop (localStorage/IndexedDB, sem backend):
+
+- Multiempresa: cada contabilidade é um workspace isolado (troca pelo seletor no cabeçalho), com todos os dados namespaced por `contabilidadeId`.
+- Cadastro de cliente sem nenhum campo de senha — apenas "Situação de Acesso" (procuração pendente / certificado disponível / acesso autorizado / aguardando documentação).
+- Importação de planilha com detecção e remoção automática de colunas de senha/credencial antes de qualquer exibição ou armazenamento.
+- Painel de Pendências (cadastro, urgência, status, filtro).
+- Guias/Dívidas vinculadas a cliente, com status (aberta/vencida/paga/parcelada/etc.), reconhecimento automático via OCR de boletos/prints (inclui DAS, IRRF, INSS, ICMS, ISS, IBS, CBS, Imposto Seletivo) e exportação PDF/Excel.
+- Checklist mensal por regime tributário e dossiê exportável em PDF, dentro do cadastro de cada cliente.
+- Frases prontas (mensagens de cobrança/orientação), incluindo modelo padrão sobre a Reforma Tributária 2026.
+- Assistente de IA local (sem API) com base de conhecimento sobre DAS MEI, Simples Nacional, IRPF, dívida ativa, parcelamentos e Reforma Tributária (IBS/CBS).
+- Configurações: campo opcional para cadastrar API keys (não utilizado por nenhuma função hoje — reservado para o futuro).
+
+Pendente para as próximas fases (fora do escopo de um app 100% local):
+
+- Login real e permissões por usuário interno.
+- Backend com banco persistente (hoje os dados vivem no computador de quem usa — não sincronizam entre dispositivos da mesma contabilidade nem fazem backup automático em nuvem; existe backup/restauração manual em JSON pela aba Configurações).
+- Painel administrativo e planos pagos.
+- Trava de licença/ativação — hoje o instalador não tem nenhuma proteção contra cópia; quem tiver o `.exe` pode instalar e usar livremente. Para cobrar de forma automática (ex.: via Stripe) seria necessário um sistema de chave de ativação, o que também depende de um backend.

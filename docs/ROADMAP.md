@@ -11,13 +11,13 @@
 
 - Remover/substituir qualquer armazenamento de senhas sensíveis.
 - Criar estrutura lógica de contabilidade > clientes > documentos > pendências.
-- Garantir que o app funcione sem JARVIS.
+- Garantir que o app funcione 100% sozinho, sem dependência externa.
 
 ## Fase 2 — Produto operacional
 
 - Melhorar cadastro de clientes.
 - Criar painel de pendências.
-- Organizar documentos por cliente.
+- Organizar documentos por cliente, com reconhecimento automático de padrões (tributo, valor, vencimento).
 - Criar guias/débitos por cliente.
 - Criar checklists e mensagens prontas.
 
@@ -27,12 +27,11 @@
 - Preparar IDs internos: contabilidadeId, clienteId, documentoId, pendenciaId.
 - Evitar mistura entre contabilidades.
 
-## Fase 4 — Integração opcional com JARVIS
+## Fase 4 — Recurso opcional de chat/IA
 
-- Adicionar configuração de API key por contabilidade.
-- Enviar documentos/textos ao JARVIS quando habilitado.
-- Salvar análises no cliente correto.
-- Manter funcionamento sem JARVIS.
+- Adicionar campo de configuração de API keys por contabilidade (quantas o cliente quiser cadastrar).
+- Estrutura de plugin/adaptador simples para o serviço que o cliente escolher plugar.
+- Manter funcionamento 100% completo sem esse recurso.
 
 ## Fase 5 — Produto comercial
 
@@ -40,3 +39,4 @@
 - Relatórios por cliente.
 - Painel administrativo.
 - Login real e banco persistente, quando sair do MVP local.
+- Posicionamento de venda aproveitando a janela da Reforma Tributária (2026).
