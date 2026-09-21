@@ -4,11 +4,11 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Smart Contability Assistance — Assistente Fiscal</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.plugin.autotable.min.js"></script>
+<script src="vendor/tesseract.min.js"></script>
+<script src="vendor/pdf.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1181,8 +1181,7 @@ async function _levProcessar(file, isPDF){
     }
     levSetLoading(true, '📄 Extraindo texto do PDF...');
     const arrBuf = await file.arrayBuffer();
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
     const pdf = await pdfjsLib.getDocument({ data: arrBuf }).promise;
     const paginas = [];
     for(let p = 1; p <= pdf.numPages; p++){
@@ -1222,10 +1221,18 @@ async function _levProcessar(file, isPDF){
   levAdicionarItens(itens, file.name);
 }
 
+// Configuração local do Tesseract — roda 100% offline, sem CDN
+const TESS_OPTS = {
+  workerPath: 'vendor/worker.min.js',
+  corePath: 'vendor/tesseract-core-simd-lstm.wasm.js',
+  langPath: 'vendor/tessdata'
+};
+
 // OCR de arquivo de imagem
 async function _ocrFile(file){
   return new Promise((resolve, reject) => {
     Tesseract.recognize(file, 'por', {
+      ...TESS_OPTS,
       logger: m => {
         if(m.status === 'recognizing text'){
           const pct = Math.round(m.progress * 100);
@@ -1240,6 +1247,7 @@ async function _ocrFile(file){
 async function _ocrCanvas(canvas){
   return new Promise((resolve, reject) => {
     Tesseract.recognize(canvas, 'por', {
+      ...TESS_OPTS,
       logger: m => {
         if(m.status === 'recognizing text'){
           const pct = Math.round(m.progress * 100);

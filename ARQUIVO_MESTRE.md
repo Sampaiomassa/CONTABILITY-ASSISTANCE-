@@ -409,13 +409,13 @@ Regras:
 
 Como o objetivo é custo zero no início, começar simples.
 
-Opções de MVP:
+O Assistente Contábil é distribuído como **programa de Windows (instalador `.exe`)**, não como site:
 
-- HTML/CSS/JavaScript;
-- IndexedDB para armazenamento local inicial;
-- exportações locais;
-- GitHub para versionamento;
-- Render/Vercel/Netlify Free quando necessário.
+- HTML/CSS/JavaScript (toda a lógica do produto);
+- Electron para empacotar como aplicativo desktop, com instalador e desinstalador nativos (NSIS);
+- IndexedDB/localStorage para armazenamento local, dentro do próprio computador de quem instalou;
+- bibliotecas de terceiros (planilha, PDF, OCR) vendorizadas localmente — o programa funciona 100% offline, sem nenhuma chamada a CDN;
+- GitHub para versionamento, com GitHub Actions gerando o instalador automaticamente a cada atualização, gratuito.
 
 Evolução futura:
 
@@ -427,6 +427,7 @@ Evolução futura:
 - auditoria;
 - planos pagos;
 - painel administrativo;
+- sistema de licença/ativação (necessário se for cobrar de forma automática, ex. via Stripe — hoje o instalador não tem nenhuma proteção contra cópia);
 - campo opcional de API keys, caso o produto ganhe recurso de chat/IA.
 
 ## 11. Fases recomendadas no Assistente Contábil

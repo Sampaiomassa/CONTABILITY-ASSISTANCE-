@@ -50,9 +50,33 @@ Criar uma central funcional para contabilidades e firmas pequenas com:
 - Não misturar dados entre contabilidades.
 - Não vender como substituto do Domínio.
 
+## Como é distribuído
+
+O Assistente Contábil é um **programa de computador (Windows)**, não um site. `index.html` continua sendo o coração do sistema (toda a lógica roda ali dentro), mas ele é empacotado com Electron para virar um instalador `.exe` de verdade:
+
+- instala como qualquer programa (assistente de instalação, atalho no menu iniciar/área de trabalho);
+- aparece em "Adicionar ou remover programas" do Windows, com desinstalação normal;
+- roda 100% offline — todas as bibliotecas (planilha, PDF, leitura de boleto por OCR) ficam dentro do próprio instalador, em `vendor/`, nada é buscado de CDN externo.
+
+Arquivos da parte de empacotamento:
+
+- `main.js` — processo principal do Electron (abre a janela do programa).
+- `package.json` — configuração do instalador (nome, ícone, versão, gerador NSIS para Windows).
+- `vendor/` — bibliotecas de terceiros (XLSX, jsPDF, pdf.js, Tesseract.js + dados de OCR em português) vendorizadas localmente.
+- `.github/workflows/build-windows.yml` — gera o instalador `.exe` automaticamente a cada atualização (GitHub Actions, grátis), disponível para download em "Actions" → build → artifacts, ou anexado a uma Release do repositório.
+
+Para gerar o instalador manualmente (com Node.js instalado):
+
+```
+npm install
+npm run dist
+```
+
+O `.exe` final aparece em `dist/`.
+
 ## Estado atual (MVP local, `index.html`)
 
-Implementado e funcional, 100% no navegador (localStorage/IndexedDB, sem backend):
+Implementado e funcional, 100% no navegador/desktop (localStorage/IndexedDB, sem backend):
 
 - Multiempresa: cada contabilidade é um workspace isolado (troca pelo seletor no cabeçalho), com todos os dados namespaced por `contabilidadeId`.
 - Cadastro de cliente sem nenhum campo de senha — apenas "Situação de Acesso" (procuração pendente / certificado disponível / acesso autorizado / aguardando documentação).
@@ -64,8 +88,9 @@ Implementado e funcional, 100% no navegador (localStorage/IndexedDB, sem backend
 - Assistente de IA local (sem API) com base de conhecimento sobre DAS MEI, Simples Nacional, IRPF, dívida ativa, parcelamentos e Reforma Tributária (IBS/CBS).
 - Configurações: campo opcional para cadastrar API keys (não utilizado por nenhuma função hoje — reservado para o futuro).
 
-Pendente para as próximas fases (fora do escopo de um app 100% front-end):
+Pendente para as próximas fases (fora do escopo de um app 100% local):
 
 - Login real e permissões por usuário interno.
-- Backend com banco persistente (hoje os dados vivem no navegador de quem usa — não sincronizam entre dispositivos nem fazem backup automático em nuvem).
+- Backend com banco persistente (hoje os dados vivem no computador de quem usa — não sincronizam entre dispositivos da mesma contabilidade nem fazem backup automático em nuvem; existe backup/restauração manual em JSON pela aba Configurações).
 - Painel administrativo e planos pagos.
+- Trava de licença/ativação — hoje o instalador não tem nenhuma proteção contra cópia; quem tiver o `.exe` pode instalar e usar livremente. Para cobrar de forma automática (ex.: via Stripe) seria necessário um sistema de chave de ativação, o que também depende de um backend.
