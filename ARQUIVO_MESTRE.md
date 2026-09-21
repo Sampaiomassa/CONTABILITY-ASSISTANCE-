@@ -3,15 +3,15 @@
 
 ## 1. Objetivo central
 
-Criar um software funcional para escritórios de contabilidade, vendável para várias contabilidades diferentes, com custo inicial zero de desenvolvimento e arquitetura segura multiempresa.
+Criar um software funcional para escritórios de contabilidade e firmas pequenas, vendável para várias contabilidades diferentes, com custo inicial zero de desenvolvimento e arquitetura segura multiempresa.
 
-O sistema deve funcionar por conta própria, mesmo sem JARVIS.
-
-O JARVIS entra como camada opcional/premium de inteligência, automação, análise documental e apoio operacional. Ele não é dependência obrigatória para o produto funcionar.
+O sistema é **100% independente e autossuficiente**. Não depende de nenhuma IA externa, API paga ou serviço de terceiro para funcionar. Todo o reconhecimento de documentos, organização, checklists e exportações rodam por conta própria.
 
 Frase guia:
 
-> O Assistente Contábil organiza a rotina da contabilidade por conta própria. Com o JARVIS integrado, ele ganha inteligência, análise automática e automações avançadas.
+> O Assistente Contábil organiza a rotina da contabilidade por conta própria, reconhecendo padrões em documentos e cobranças automaticamente — sem depender de nenhum serviço externo.
+
+Gatilho de mercado: a partir de 2026 começa a transição da Reforma Tributária (IBS/CBS). Escritórios pequenos e firmas terão que se adaptar rápido a mudanças nas obrigações fiscais, o que deve aumentar a demanda por ferramentas de organização e triagem documental. O produto deve estar pronto para essa janela.
 
 ## 2. Posicionamento do produto
 
@@ -27,37 +27,20 @@ Frase comercial principal:
 
 Fluxo ideal:
 
-Cliente manda bagunça → Assistente Contábil organiza → Equipe confere → JARVIS potencializa quando necessário → Domínio recebe informação pronta.
+Cliente manda bagunça → Assistente Contábil reconhece padrões e organiza → Equipe confere → Domínio recebe informação pronta.
 
-## 3. Regra arquitetural obrigatória
+## 3. Integrações externas (opcional e futuro)
 
-O JARVIS e o Assistente Contábil são projetos separados.
+O Assistente Contábil não tem nenhuma dependência de API externa, IA ou serviço de terceiros embutida na arquitetura.
 
-### JARVIS
+Futuramente, poderá existir uma camada opcional de integrações via **BANKS** — projeto à parte, que funciona como hub de API keys: o cliente cadastra a chave de qualquer serviço externo que queira usar (bancário, fiscal, IA, ou outro). O Assistente Contábil apenas consome essa camada quando habilitada; nunca depende dela para as funções básicas.
 
-O JARVIS é API central independente, cérebro externo de IA, camada de autenticação, memória, upload e contexto.
+Regras:
 
-O repositório do JARVIS não deve receber nenhuma pasta ou código do Assistente Contábil, nem de qualquer outro aplicativo terceiro.
-
-Não colocar no repositório JARVIS:
-
-- pasta do Assistente Contábil;
-- código específico de contabilidade;
-- frontend final de produto externo;
-- código de cliente final;
-- app terceiro.
-
-### Assistente Contábil
-
-O Assistente Contábil deve ter repositório próprio.
-
-Ele deve ser funcional sozinho.
-
-Quando precisar de IA, ele chama o JARVIS via API segura:
-
-```http
-Authorization: Bearer <API_KEY_DA_CONTABILIDADE>
-```
+- O Assistente Contábil tem repositório próprio e funciona sozinho.
+- Nenhum código de integração é obrigatório no core do produto.
+- Se/quando a integração com BANKS for implementada, ela entra como módulo plugável e desligável, nunca como dependência.
+- Não hardcodar chave alguma no repositório do Assistente Contábil.
 
 ## 4. Modelo comercial
 
@@ -84,7 +67,6 @@ O isolamento deve valer para:
 - débitos;
 - mensagens;
 - relatórios;
-- análises do JARVIS;
 - usuários internos;
 - configurações.
 
@@ -104,7 +86,7 @@ Contabilidade contratante
  │    └── Relatórios
  ├── Configurações
  ├── Exportações
- └── Integração opcional com JARVIS
+ └── Integrações opcionais (BANKS / API keys do cliente)
 ```
 
 IDs mínimos recomendados desde o início:
@@ -119,15 +101,15 @@ IDs mínimos recomendados desde o início:
 
 Todo registro sensível deve estar vinculado a `contabilidadeId`.
 
-## 6. MVP funcional sem JARVIS
+## 6. MVP funcional
 
-O primeiro MVP deve funcionar sem IA.
+O MVP deve ser 100% funcional por conta própria, sem qualquer integração externa.
 
 Funcionalidades obrigatórias do MVP básico:
 
 1. Cadastro de contabilidades.
 2. Cadastro de clientes por contabilidade.
-3. Cadastro e organização de documentos por cliente.
+3. Cadastro e organização de documentos por cliente, com reconhecimento automático de padrões (tributo, valor, vencimento, status).
 4. Painel de pendências.
 5. Registro de guias e débitos.
 6. Checklists mensais por tipo de cliente.
@@ -152,7 +134,7 @@ Campos recomendados:
 - plano contratado;
 - data de cadastro;
 - configurações internas;
-- chave JARVIS opcional.
+- integrações habilitadas (BANKS, quando existir).
 
 ### 7.2 Cadastro de clientes
 
@@ -213,13 +195,12 @@ Funções:
 
 - anexar documento;
 - vincular ao cliente;
-- classificar documento;
+- classificar documento automaticamente (reconhecimento de padrões);
 - registrar origem;
 - registrar data;
 - marcar status;
 - adicionar observações;
-- exportar;
-- enviar ao JARVIS quando habilitado.
+- exportar.
 
 Status de documento:
 
@@ -315,7 +296,7 @@ A tela deve mostrar:
 
 ### 7.6 Mensagens prontas
 
-O sistema deve ter modelos fixos mesmo sem JARVIS.
+O sistema deve ter modelos fixos, funcionando por conta própria.
 
 Tipos:
 
@@ -328,8 +309,6 @@ Tipos:
 - explicar para cliente leigo;
 - mensagem formal;
 - mensagem urgente.
-
-Com JARVIS, as mensagens podem ser personalizadas com base no contexto do cliente.
 
 ### 7.7 Checklists mensais
 
@@ -387,7 +366,7 @@ Exportações úteis:
 
 ### 7.10 Preparação para o Domínio
 
-Criar indicador “Pronto para Domínio”.
+Criar indicador "Pronto para Domínio".
 
 Checklist exemplo:
 
@@ -399,81 +378,21 @@ Checklist exemplo:
 - observações internas preenchidas;
 - pronto para lançar/conferir no Domínio.
 
-## 8. Papel opcional/premium do JARVIS
+## 8. Integrações futuras via BANKS
 
-O JARVIS não é obrigatório para o funcionamento básico.
+O Assistente Contábil funciona 100% sem nenhuma integração externa.
 
-Sem JARVIS, o sistema continua com cadastros, documentos, pendências, guias, checklists, mensagens prontas e exportações.
+Quando o BANKS (hub de API keys do cliente, projeto à parte) estiver disponível para integração, o sistema poderá ganhar, de forma opcional:
 
-Com JARVIS, o sistema ganha:
-
-- análise automática de documentos;
+- análise automática de documentos por serviços de terceiros escolhidos pelo cliente;
 - resumo inteligente de PDFs;
-- classificação de guias;
-- interpretação de prints;
-- sugestão de pendências;
+- classificação avançada de guias;
 - geração de mensagens personalizadas;
-- explicação de impostos em linguagem simples;
-- criação de relatórios inteligentes;
-- apoio para funcionários novos;
-- automação de conferência.
+- automações de conferência.
 
-Fluxo com JARVIS:
+Essa camada nunca é pré-requisito para o funcionamento do produto e não fica presa a um fornecedor específico — cada contabilidade decide quais serviços externos (se algum) quer plugar via BANKS.
 
-```text
-Usuário anexa uma guia
-Assistente extrai texto
-Assistente envia texto ao JARVIS
-JARVIS identifica o documento
-JARVIS sugere pendência ou ação
-Assistente salva o resultado no cliente correto
-```
-
-## 9. Estado atual do JARVIS
-
-O JARVIS já está com as seguintes fases concluídas:
-
-- Fase 1: segurança base;
-- Fase 2: isolamento inicial por contexto autenticado;
-- Fase 3: multiempresa inicial por API keys;
-- Fase 4: frontend/painel de teste com API key.
-
-URL atual:
-
-```text
-https://jarvis-e32a.onrender.com
-```
-
-Health público:
-
-```text
-GET https://jarvis-e32a.onrender.com/api/health
-```
-
-Autenticação recomendada:
-
-```http
-Authorization: Bearer <API_KEY_DA_CONTABILIDADE>
-```
-
-Endpoints úteis:
-
-```text
-GET /api/health
-GET /api/conversations
-POST /api/conversations
-GET /api/conversations/:id
-DELETE /api/conversations/:id
-POST /api/chat
-POST /api/upload
-GET /api/upload/:id/analyze
-GET /api/memory/search?q=termo
-POST /api/memory/search
-```
-
-Atenção: o JARVIS ainda usa armazenamento em memória no estado atual. Deploy/restart pode apagar conversas/uploads temporários. Persistência real fica para fase futura do JARVIS.
-
-## 10. Segurança obrigatória
+## 9. Segurança obrigatória
 
 Regras:
 
@@ -481,13 +400,12 @@ Regras:
 - não misturar dados entre contabilidades;
 - não hardcodar API keys;
 - não salvar chave real em repositório;
-- não depender do JARVIS para funções básicas;
 - não vender como substituto do Domínio;
 - não prometer apuração oficial automática;
 - não expor dados fiscais em logs;
 - não deixar uma contabilidade acessar dados de outra.
 
-## 11. Stack inicial sugerida
+## 10. Stack inicial sugerida
 
 Como o objetivo é custo zero no início, começar simples.
 
@@ -497,8 +415,7 @@ Opções de MVP:
 - IndexedDB para armazenamento local inicial;
 - exportações locais;
 - GitHub para versionamento;
-- Render/Vercel/Netlify Free quando necessário;
-- integração com JARVIS via API.
+- Render/Vercel/Netlify Free quando necessário.
 
 Evolução futura:
 
@@ -510,23 +427,22 @@ Evolução futura:
 - auditoria;
 - planos pagos;
 - painel administrativo;
-- gestão de API keys.
+- integração opcional com BANKS.
 
-## 12. Fases recomendadas no Assistente Contábil
+## 11. Fases recomendadas no Assistente Contábil
 
 ### Fase A — Fundação do projeto
 
-- criar repositório próprio;
 - organizar arquivos;
-- remover credenciais sensíveis;
+- remover credenciais sensíveis (ex.: campo de senha GOV.br);
 - definir estrutura de dados;
-- garantir que nenhum código do Assistente vá para o repositório JARVIS.
+- manter o repositório 100% independente de qualquer outro projeto.
 
-### Fase B — Produto funcional sem JARVIS
+### Fase B — Produto funcional
 
 - cadastro de contabilidades;
 - cadastro de clientes;
-- documentos por cliente;
+- documentos por cliente, com reconhecimento de padrões;
 - pendências;
 - guias/débitos;
 - checklists;
@@ -539,14 +455,11 @@ Evolução futura:
 - garantir que uma contabilidade não veja dados de outra;
 - criar seletor/ambiente por contabilidade no MVP local.
 
-### Fase D — Integração opcional com JARVIS
+### Fase D — Integração opcional com BANKS
 
-- campo de configuração da API key por contabilidade;
-- chamada ao endpoint /api/chat;
-- chamada ao endpoint /api/upload;
-- análise de documentos;
-- geração de mensagens inteligentes;
-- resumo de cliente.
+- campo de configuração de API keys por contabilidade (via BANKS);
+- estrutura de plugin/adaptador para serviços externos escolhidos pelo cliente;
+- garantir que a ausência dessa integração não afete nenhuma função básica.
 
 ### Fase E — Comercialização
 
@@ -554,23 +467,20 @@ Evolução futura:
 - criar página inicial/apresentação;
 - criar documentação de uso;
 - criar fluxo de onboarding;
-- preparar demonstração para escritórios.
+- preparar demonstração para escritórios, destacando a adaptação à Reforma Tributária.
 
-## 13. Prompt inicial recomendado para Claude Code
+## 12. Prompt inicial recomendado para Claude Code
 
 Use este prompt no Claude Code quando o repositório do Assistente Contábil estiver criado e o arquivo base estiver no projeto:
 
 ```text
-Você é um arquiteto sênior fullstack, especialista em SaaS multiempresa, segurança, automações, contabilidade operacional, UX de sistemas internos e integração com APIs de IA.
+Você é um arquiteto sênior fullstack, especialista em SaaS multiempresa, segurança, automações, contabilidade operacional e UX de sistemas internos.
 
 Contexto:
-Este projeto é o Assistente Contábil, um software funcional para escritórios de contabilidade. Ele deve funcionar por conta própria, sem depender do JARVIS. O JARVIS será apenas uma camada opcional/premium para análise, automação e inteligência.
-
-Regra obrigatória:
-Este repositório é somente do Assistente Contábil. Não colocar código do JARVIS aqui além de chamadas externas via API. O repositório JARVIS também não deve receber nenhuma pasta deste app.
+Este projeto é o Assistente Contábil, um software funcional e independente para escritórios de contabilidade e firmas pequenas. Ele não depende de nenhuma API externa, IA ou serviço de terceiros para funcionar. Futuramente poderá existir uma camada opcional de integrações via BANKS (hub de API keys do cliente), mas isso nunca é pré-requisito.
 
 Objetivo do produto:
-Criar uma central operacional para contabilidades organizarem clientes, documentos, pendências, guias, débitos, mensagens, checklists e relatórios, complementando o Domínio sem substituí-lo.
+Criar uma central operacional para contabilidades organizarem clientes, documentos, pendências, guias, débitos, mensagens, checklists e relatórios — reconhecendo padrões automaticamente — complementando o Domínio sem substituí-lo.
 
 Nesta primeira etapa, NÃO altere arquivos. Apenas analise o projeto atual.
 
@@ -581,10 +491,9 @@ Verifique:
 4. O que deve ser removido por segurança, especialmente campos de senha GOV.br/e-CAC/prefeitura.
 5. Onde falta separação por contabilidadeId.
 6. Como transformar o app em produto multiempresa.
-7. Como manter funcionamento sem JARVIS.
-8. Onde futuramente integrar JARVIS como camada opcional.
-9. Quais riscos técnicos existem.
-10. Qual é o menor plano seguro de evolução.
+7. Onde futuramente integrar BANKS como camada opcional, sem criar dependência.
+8. Quais riscos técnicos existem.
+9. Qual é o menor plano seguro de evolução.
 
 Entregue:
 - diagnóstico objetivo;
@@ -600,39 +509,39 @@ Não abra PR.
 Não altere arquivos nesta etapa.
 ```
 
-## 14. Critério de sucesso
+## 13. Critério de sucesso
 
 O projeto será considerado bem estruturado quando:
 
-- o Assistente Contábil funcionar sem JARVIS;
+- o Assistente Contábil funcionar 100% sozinho, sem nenhuma dependência externa;
 - cada contabilidade tiver dados separados;
 - clientes/documentos/pendências/guias estiverem organizados;
 - exportações funcionarem;
 - não houver senhas sensíveis armazenadas;
-- o JARVIS puder ser ativado como plus;
-- a integração com JARVIS não quebrar o produto básico;
+- a eventual integração com BANKS puder ser ativada como plus, sem quebrar o produto básico;
 - o produto puder ser demonstrado e vendido para escritórios reais.
 
-## 15. Resumo executivo
+## 14. Resumo executivo
 
-O Assistente Contábil será um software operacional vendável para escritórios de contabilidade.
+O Assistente Contábil será um software operacional vendável para escritórios de contabilidade e firmas pequenas.
 
-Ele organiza clientes, documentos, pendências, guias, débitos, mensagens, checklists e relatórios.
+Ele organiza clientes, documentos, pendências, guias, débitos, mensagens, checklists e relatórios, reconhecendo padrões automaticamente.
 
 Ele complementa o Domínio, preparando informações antes das rotinas oficiais.
 
-O sistema deve funcionar sozinho.
+O sistema é 100% independente e funciona sozinho, sem depender de nenhuma API ou IA externa.
 
-O JARVIS será uma camada opcional/premium para inteligência, análise e automação.
+Uma camada opcional e futura de integrações externas poderá ser plugada via BANKS (hub de API keys do cliente), sem nunca virar dependência.
 
-A arquitetura deve ser multiempresa, segura e com repositórios separados.
+A arquitetura deve ser multiempresa e segura.
+
+Contexto de oportunidade: 2026 marca o início da Reforma Tributária (IBS/CBS) — escritórios pequenos vão precisar se organizar rápido diante das mudanças, o que reforça a proposta de valor do produto.
 
 Visão final:
 
 ```text
 Cliente manda bagunça.
-Assistente Contábil organiza.
+Assistente Contábil reconhece padrões e organiza.
 Equipe confere.
-JARVIS potencializa quando necessário.
 Domínio recebe informação pronta.
 ```
