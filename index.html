@@ -651,9 +651,19 @@ Importe sua planilha na aba Planilha e pergunte aqui!</div>
     <div style="font-size:11px;color:var(--dim);margin-bottom:16px">Cadastre quantas API keys quiser, das ferramentas que já tiver à disposição. Ficam salvas apenas neste navegador. O sistema funciona 100% sem elas — cada uma é um plus opcional. Marque "usar como cérebro do chat" para que a aba IA use essa chave para responder com mais inteligência; sem chave marcada, a IA local (sem custo, sem internet) continua funcionando normalmente.</div>
     <div id="apikey-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"></div>
     <button class="btn btn-ghost btn-sm btn-full" onclick="addApiKeyRow()" style="margin-bottom:16px">+ Adicionar API Key</button>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:18px">
       <button class="btn btn-ghost btn-sm" onclick="fecharConfig()">Fechar</button>
       <button class="btn btn-gn" onclick="salvarApiKeys()">💾 Salvar</button>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">📦 Backup desta contabilidade</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:10px">Tudo fica só neste navegador. Sem backup, formatar o computador ou limpar o cache apaga todo o cadastro. ⚠️ O arquivo gerado contém dados sensíveis (inclusive acessos protegidos) — guarde em local seguro.</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="exportarBackup()">⬇️ Exportar backup</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('backup-file').click()">⬆️ Restaurar backup</button>
+        <input type="file" id="backup-file" accept="application/json" style="display:none" onchange="if(this.files[0])importarBackup(this.files[0]);this.value='';"/>
+      </div>
     </div>
   </div>
 </div>
@@ -808,6 +818,10 @@ function verCliente(i){
       <span style="font-weight:700;color:var(--muted);min-width:110px;font-size:10px;text-transform:uppercase">${k}</span>
       <span style="font-size:13px">${esc(v)}</span>
     </div>`).join('');
+
+  if(c.whatsapp){
+    html+=`<div style="margin-top:12px"><button class="btn btn-gn btn-sm" onclick="abrirWhatsapp('${c.whatsapp.replace(/'/g,"\\'")}','')">📲 Abrir WhatsApp</button></div>`;
+  }
 
   if(c.acessoCredencial){
     html+=`<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">🔒 Acesso/Credencial (protegido)</div>
@@ -1544,6 +1558,7 @@ function renderFrases(){
         <div style="display:flex;gap:5px;flex-shrink:0">
           <button class="btn btn-ghost btn-xs" onclick="abrirEditModal('${f.id}')" title="Editar">✏️</button>
           <button class="btn btn-rd btn-xs"    onclick="deletarFrase('${f.id}')" title="Excluir">🗑</button>
+          <button class="btn btn-gn btn-xs"    onclick="enviarFraseWhatsapp('${f.id}')" title="Enviar por WhatsApp">📲</button>
           <button class="btn btn-or btn-xs"    id="copybtn-${sid}" onclick="copiarFrase('${f.id}')">📋 Copiar</button>
         </div>
       </div>
@@ -2472,6 +2487,70 @@ function salvarApiKeys(){
   renderApiKeys();
   atualizarModoIA();
   fecharConfig();
+}
+
+// ──────────────────────────────────────
+// BACKUP / RESTAURAÇÃO (por contabilidade)
+// ──────────────────────────────────────
+function exportarBackup(){
+  const wk = contabilidadeAtiva();
+  const backup = {
+    aviso: 'Este arquivo contem dados sensiveis de clientes (inclusive acessos protegidos). Guarde em local seguro e nao compartilhe.',
+    versao: 1, geradoEm: new Date().toISOString(),
+    contabilidade: wk,
+    clientes, frases, pendencias, guias: dividas, checklists, apikeys
+  };
+  const nomeArq = 'backup_'+(wk?wk.nome.replace(/[^a-z0-9]+/gi,'_'):'contabilidade')+'_'+hoje()+'.json';
+  baixar(JSON.stringify(backup,null,2), nomeArq, 'application/json');
+}
+
+function importarBackup(file){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const backup = JSON.parse(e.target.result);
+      const nomeAtivo = (contabilidadeAtiva()||{}).nome||'';
+      if(!confirm('Isso vai SUBSTITUIR todos os dados da contabilidade ativa ("'+nomeAtivo+'") pelo conteudo do backup. Continuar?'))return;
+      clientes = backup.clientes||[];
+      frases = (backup.frases&&backup.frases.length)?backup.frases:frasesPadrao();
+      pendencias = backup.pendencias||[];
+      dividas = backup.guias||[];
+      checklists = backup.checklists||{};
+      apikeys = backup.apikeys||[];
+      salvarClientes();renderClientes();
+      salvarFrases();renderFrases();
+      salvarPendencias();renderPendencias();
+      salvarDividas();renderDividas();
+      localStorage.setItem(nsKey('checklists'),JSON.stringify(checklists));
+      localStorage.setItem(nsKey('apikeys'),JSON.stringify(apikeys));
+      atualizarModoIA();
+      renderApiKeys();
+      alert('Backup restaurado com sucesso.');
+    }catch(err){ alert('Erro ao ler o backup: '+err.message); }
+  };
+  reader.readAsText(file);
+}
+
+// ──────────────────────────────────────
+// WHATSAPP DIRETO (liga Cadastro + Frases)
+// ──────────────────────────────────────
+function abrirWhatsapp(numero, texto){
+  const limpo = String(numero||'').replace(/\D/g,'').replace(/^0+/,'');
+  if(!limpo){ alert('Numero de WhatsApp invalido ou nao cadastrado.'); return; }
+  const comDDI = limpo.length<=11 ? '55'+limpo : limpo;
+  const url = 'https://wa.me/'+comDDI+(texto?('?text='+encodeURIComponent(texto)):'');
+  window.open(url,'_blank');
+}
+function enviarFraseWhatsapp(id){
+  const f=frases.find(x=>x.id===id); if(!f) return;
+  const termo=prompt('Nome do cliente para enviar esta frase (ou cancele e envie manualmente):');
+  if(termo===null) return;
+  let numero='';
+  const cli=clientes.find(c=>c.nome.toLowerCase().includes(termo.trim().toLowerCase()));
+  if(cli&&cli.whatsapp) numero=cli.whatsapp;
+  else numero=prompt('Cliente nao encontrado com WhatsApp cadastrado. Informe o numero (DDD+numero):')||'';
+  if(!numero){ return; }
+  abrirWhatsapp(numero, f.texto);
 }
 
 // ──────────────────────────────────────
