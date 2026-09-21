@@ -46,7 +46,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-u
 .gap{display:flex;flex-direction:column;gap:14px}
 
 /* SUMMARY */
-.sum-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.sum-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
 @media(max-width:860px){.sum-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.sum-grid{grid-template-columns:1fr 1fr}}
 .sum-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;transition:all .15s}
@@ -151,6 +151,27 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 /* MISC */
 .empty{text-align:center;color:var(--dim);padding:24px;font-size:13px}
+.badge-rd{background:var(--rdbg);color:var(--rd);border:1px solid #5a1a1a}
+
+/* WORKSPACE / CONFIG */
+.wksel{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;font-size:12px;white-space:nowrap}
+.wksel:hover{border-color:var(--orm)}
+.iconbtn{width:30px;height:30px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0}
+.iconbtn:hover{color:var(--text);border-color:var(--border2)}
+
+/* PENDÊNCIAS */
+.pend-row{border-left:3px solid var(--border2);background:var(--bg3);border-radius:0 8px 8px 0;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:12px;line-height:1.5}
+.pend-row.urg-alta{border-left-color:var(--rd)}
+.pend-row.urg-media{border-left-color:var(--am)}
+.pend-row.urg-baixa{border-left-color:var(--bl)}
+.pend-row.resolvida{opacity:.5}
+
+/* CHECKLIST ITEM (dossiê) */
+.chk-item{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;cursor:pointer}
+.chk-item input{width:15px;height:15px;accent-color:var(--or);cursor:pointer}
+
+/* API KEY ROW */
+.apikey-row{display:flex;gap:8px;align-items:center}
 </style>
 </head>
 <body>
@@ -162,8 +183,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="hdr-sub">Sistema operacional contábil</div>
   </div>
   <div class="hdr-right">
+    <span id="hdr-pend" class="badge badge-rd" style="display:none"></span>
     <span id="hdr-frases" class="badge badge-or" style="display:none"></span>
     <span id="hdr-clientes" class="badge badge-gn" style="display:none"></span>
+    <div class="wksel" id="wk-selector" onclick="abrirContabilidades()" title="Trocar contabilidade">🏢 <span id="wk-nome">—</span> ▾</div>
+    <div class="iconbtn" onclick="abrirConfig()" title="Configurações · API keys (opcional)">⚙️</div>
   </div>
 </div>
 
@@ -174,8 +198,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div class="sum-card active-sc" id="sc-cadastro" onclick="setTab('cadastro')">
       <div class="sum-icon">👤</div><div class="sum-title">Clientes</div><div class="sum-desc">Cadastro e checklist</div>
     </div>
+    <div class="sum-card" id="sc-pendencias" onclick="setTab('pendencias')">
+      <div class="sum-icon">📌</div><div class="sum-title">Pendências</div><div class="sum-desc">O que falta cobrar</div>
+    </div>
     <div class="sum-card" id="sc-levantamento" onclick="setTab('levantamento')">
-      <div class="sum-icon">📋</div><div class="sum-title">Levantamento</div><div class="sum-desc">Dívidas e tributos</div>
+      <div class="sum-icon">📋</div><div class="sum-title">Guias/Dívidas</div><div class="sum-desc">Tributos e débitos</div>
     </div>
     <div class="sum-card" id="sc-planilha" onclick="setTab('planilha')">
       <div class="sum-icon">📊</div><div class="sum-title">Planilhas</div><div class="sum-desc">Importação grupos</div>
@@ -191,7 +218,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <!-- TABS -->
   <div class="tabs">
     <button class="tab active" id="tab-cadastro"     onclick="setTab('cadastro')">👤 Cadastro</button>
-    <button class="tab"        id="tab-levantamento" onclick="setTab('levantamento')">📋 Levantamento</button>
+    <button class="tab"        id="tab-pendencias"   onclick="setTab('pendencias')">📌 Pendências</button>
+    <button class="tab"        id="tab-levantamento" onclick="setTab('levantamento')">📋 Guias/Dívidas</button>
     <button class="tab"        id="tab-planilha"     onclick="setTab('planilha')">📊 Planilha</button>
     <button class="tab"        id="tab-frases"       onclick="setTab('frases')">💬 Frases</button>
     <button class="tab"        id="tab-ia"           onclick="setTab('ia')">🤖 IA</button>
@@ -212,12 +240,30 @@ tr:hover td{background:rgba(255,255,255,.02)}
             <input class="fi" id="c-cpf" placeholder="000.000.000-00" oninput="fmtCPF(this);atualizarChecklist()"/></div>
           <div class="fg"><label class="fl">CNPJ</label>
             <input class="fi" id="c-cnpj" placeholder="00.000.000/0001-00" oninput="fmtCNPJ(this);atualizarChecklist()"/></div>
-          <div class="fg"><label class="fl">Título de Eleitor</label>
-            <input class="fi" id="c-titulo" placeholder="Número do título" oninput="atualizarChecklist()"/></div>
+          <div class="fg"><label class="fl">Regime Tributário</label>
+            <select class="fi" id="c-regime" onchange="atualizarChecklist()">
+              <option value="">Selecione...</option>
+              <option value="MEI">MEI</option>
+              <option value="Simples Nacional">Simples Nacional</option>
+              <option value="Lucro Presumido">Lucro Presumido</option>
+              <option value="Pessoa Física">Pessoa Física</option>
+              <option value="Doméstico">Doméstico</option>
+              <option value="Produtor Rural">Produtor Rural</option>
+              <option value="Outro">Outro</option>
+            </select></div>
+          <div class="fg"><label class="fl">WhatsApp</label>
+            <input class="fi" id="c-whatsapp" placeholder="(00) 00000-0000" oninput="atualizarChecklist()"/></div>
           <div class="fg"><label class="fl">E-mail</label>
             <input class="fi" id="c-email" placeholder="cliente@email.com" oninput="atualizarChecklist()"/></div>
-          <div class="fg"><label class="fl">Senha GOV.br</label>
-            <input class="fi" id="c-senha" type="password" placeholder="Senha do portal GOV.br" oninput="atualizarChecklist()"/></div>
+          <div class="fg"><label class="fl">Situação de Acesso</label>
+            <select class="fi" id="c-acesso">
+              <option value="">Não definido</option>
+              <option value="Procuração pendente">Procuração pendente</option>
+              <option value="Certificado disponível">Certificado disponível</option>
+              <option value="Acesso autorizado">Acesso autorizado</option>
+              <option value="Aguardando documentação">Aguardando documentação</option>
+            </select>
+            <div style="font-size:10px;color:var(--dim);margin-top:2px">🔒 O sistema nunca armazena senha — apenas o status de acesso.</div></div>
           <div class="fg"><label class="fl">Observações <span style="font-weight:400;text-transform:none;color:var(--dim)">(opcional)</span></label>
             <input class="fi" id="c-obs" placeholder="Anotação interna"/></div>
           <div style="display:flex;gap:8px;margin-top:4px">
@@ -237,9 +283,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
             <div class="chk"><div class="dot dot-no" id="dot-nome"></div><span>Nome / Razão Social</span></div>
             <div class="chk"><div class="dot dot-no" id="dot-cpf"></div><span>CPF</span></div>
             <div class="chk"><div class="dot dot-no" id="dot-cnpj"></div><span>CNPJ</span></div>
-            <div class="chk"><div class="dot dot-no" id="dot-titulo"></div><span>Título de Eleitor</span></div>
+            <div class="chk"><div class="dot dot-no" id="dot-regime"></div><span>Regime Tributário</span></div>
+            <div class="chk"><div class="dot dot-no" id="dot-whatsapp"></div><span>WhatsApp</span></div>
             <div class="chk"><div class="dot dot-no" id="dot-email"></div><span>E-mail</span></div>
-            <div class="chk"><div class="dot dot-no" id="dot-senha"></div><span>Senha GOV.br</span></div>
             <div class="pbar-bg"><div class="pbar" id="chk-bar" style="width:0%"></div></div>
           </div>
         </div>
@@ -256,6 +302,67 @@ tr:hover td{background:rgba(255,255,255,.02)}
             <div class="empty">Nenhum cliente salvo ainda.</div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PENDÊNCIAS -->
+  <div class="panel gap" id="panel-pendencias">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title or">📌 Nova Pendência</div>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div class="g2">
+          <div class="fg"><label class="fl">Cliente</label>
+            <select class="fi" id="pd-cliente"><option value="">Selecione um cliente...</option></select></div>
+          <div class="fg"><label class="fl">Tipo</label>
+            <select class="fi" id="pd-tipo">
+              <option>Documento faltante</option>
+              <option>Guia sem comprovante</option>
+              <option>Guia vencida</option>
+              <option>Documento ilegível</option>
+              <option>Cliente não respondeu</option>
+              <option>Informação incompleta</option>
+              <option>Falta extrato</option>
+              <option>Falta nota fiscal</option>
+              <option>Falta folha</option>
+              <option>Falta pró-labore</option>
+              <option>Acesso pendente</option>
+              <option>Procuração pendente</option>
+              <option>Adaptação Reforma Tributária</option>
+            </select></div>
+        </div>
+        <div class="g2">
+          <div class="fg"><label class="fl">Urgência</label>
+            <select class="fi" id="pd-urgencia">
+              <option value="baixa">Baixa</option>
+              <option value="media" selected>Média</option>
+              <option value="alta">Alta</option>
+            </select></div>
+          <div class="fg"><label class="fl">Responsável interno <span style="font-weight:400;text-transform:none;color:var(--dim)">(opcional)</span></label>
+            <input class="fi" id="pd-resp" placeholder="Nome de quem vai resolver"/></div>
+        </div>
+        <div class="fg"><label class="fl">Observação</label>
+          <input class="fi" id="pd-obs" placeholder="Detalhe o que falta..."/></div>
+        <button class="btn btn-or btn-full" onclick="salvarPendencia()">➕ Adicionar Pendência</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">🗂 Pendências</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="fi" id="pd-filtro" onchange="renderPendencias()" style="font-size:11px;padding:5px 8px;width:auto">
+            <option value="abertas">Em aberto</option>
+            <option value="todas">Todas</option>
+            <option value="resolvida">Resolvidas</option>
+          </select>
+          <span id="pd-count" style="font-size:11px;color:var(--dim)">0</span>
+        </div>
+      </div>
+      <div class="card-body tight" id="pd-list" style="display:flex;flex-direction:column;gap:8px">
+        <div class="empty">Nenhuma pendência registrada.</div>
       </div>
     </div>
   </div>
@@ -302,6 +409,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
               <div style="display:flex;justify-content:space-between"><span>TFE</span><span class="badge badge-gn">✓ Ok</span></div>
               <div style="display:flex;justify-content:space-between"><span>Dívida Ativa União</span><span class="badge badge-gn">✓ Ok</span></div>
               <div style="display:flex;justify-content:space-between"><span>Dívida Ativa Prefeitura</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>IBS (Reforma Tributária)</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>CBS (Reforma Tributária)</span><span class="badge badge-gn">✓ Ok</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Imposto Seletivo</span><span class="badge badge-gn">✓ Ok</span></div>
             </div>
             <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">
               💡 Solte qualquer boleto ou extrato — a IA identifica o tipo automaticamente
@@ -311,20 +421,26 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Tributo</th><th>Data</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Tributo</th><th>Data</th><th>Valor</th><th>Status</th><th></th></tr></thead>
             <tbody id="div-body">
-              <tr><td>DAS MEI</td><td>03/2022</td><td>R$ 1.240,00</td><td><span class="badge badge-or">Em atraso</span></td><td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td></tr>
-              <tr><td>INSS (CP-SEGUR)</td><td>06/2021</td><td>R$ 830,00</td><td><span class="badge badge-or">Em atraso</span></td><td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td></tr>
-              <tr><td>IRRF</td><td>11/2020</td><td>R$ 2.100,00</td><td><span class="badge badge-or">Em atraso</span></td><td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td></tr>
-              <tr><td>Dívida Ativa União</td><td>02/2019</td><td>R$ 4.800,00</td><td><span class="badge badge-or">Em atraso</span></td><td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td></tr>
             </tbody>
           </table>
         </div>
 
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input class="fi" id="nv-tri" placeholder="Tributo" style="flex:2;min-width:120px"/>
-          <input class="fi" id="nv-dt"  placeholder="Data (MM/AAAA)" style="flex:1;min-width:110px"/>
+          <select class="fi" id="nv-cli" style="flex:1.4;min-width:140px"><option value="">Cliente (opcional)</option></select>
+          <input class="fi" id="nv-tri" placeholder="Tributo" style="flex:1.4;min-width:120px"/>
+          <input class="fi" id="nv-dt"  placeholder="Competência (MM/AAAA)" style="flex:1;min-width:110px"/>
           <input class="fi" id="nv-val" placeholder="Valor (R$)" style="flex:1;min-width:110px"/>
+          <select class="fi" id="nv-status" style="flex:1;min-width:150px">
+            <option value="aberta">Aberta</option>
+            <option value="vencida">Vencida</option>
+            <option value="paga">Paga</option>
+            <option value="parcelada">Parcelada</option>
+            <option value="aguardando comprovante">Aguard. comprovante</option>
+            <option value="aguardando cliente">Aguard. cliente</option>
+            <option value="conferida">Conferida</option>
+          </select>
           <button class="btn btn-gn btn-sm" onclick="addDivida()">+ Adicionar</button>
         </div>
 
@@ -368,11 +484,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
               <tbody>
                 <tr><td>Cliente / Nome / Razão</td><td>Nome do Cliente</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
                 <tr><td>Documento / CPF / CNPJ</td><td>Documento</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
-                <tr><td>Gov / Senha / Password</td><td>Senha GOV.br</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
+                <tr><td>Regime / Tributação / Tipo</td><td>Regime Tributário</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
                 <tr><td>Email / E-mail</td><td>E-mail</td><td><span class="badge badge-am">⚠ Opcional</span></td></tr>
+                <tr><td>Gov / Senha / Password / Acesso</td><td>🔒 Bloqueada por segurança</td><td><span class="badge badge-rd">✕ Não importada</span></td></tr>
               </tbody>
             </table>
           </div>
+          <div style="font-size:11px;color:var(--dim);margin-top:10px">🔒 Qualquer coluna que pareça conter senha, código de acesso ou credencial é detectada e removida automaticamente antes da importação — nada disso fica salvo no sistema.</div>
         </div>
 
         <div id="xl-preview" style="display:none">
@@ -454,6 +572,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <button class="btn btn-ghost btn-sm" onclick="enviarSug('o que é DAS MEI?')">💡 DAS MEI</button>
       <button class="btn btn-ghost btn-sm" onclick="enviarSug('como funciona o parcelamento do Simples Nacional?')">💳 Parcelamento</button>
       <button class="btn btn-ghost btn-sm" onclick="enviarSug('prazos do IRPF 2026')">📅 IRPF</button>
+      <button class="btn btn-ghost btn-sm" onclick="enviarSug('o que muda com a reforma tributária em 2026?')">🔄 Reforma Tributária</button>
     </div>
     <div class="card">
       <div class="card-head">
@@ -468,7 +587,7 @@ Funciono 100% sem chave API.
 
 📊 Com planilha importada respondo sobre qualquer cliente: nome, CNPJ, CPF, regime, situação, e-mail — qualquer coluna da sua planilha.
 
-📚 Também respondo sobre DAS MEI, Simples Nacional, IRPF, dívida ativa, parcelamentos e obrigações fiscais.
+📚 Também respondo sobre DAS MEI, Simples Nacional, IRPF, dívida ativa, parcelamentos, obrigações fiscais e a Reforma Tributária (IBS/CBS) que começa a valer em 2026.
 
 Importe sua planilha na aba Planilha e pergunte aqui!</div>
         </div>
@@ -511,13 +630,46 @@ Importe sua planilha na aba Planilha e pergunte aqui!</div>
   </div>
 </div>
 
-<!-- MODAL VER CLIENTE -->
+<!-- MODAL VER CLIENTE / DOSSIÊ -->
 <div class="modal-bg" id="modal-cli">
   <div class="modal">
-    <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--orm)">👤 Dados do Cliente</h3>
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--orm)">👤 Dossiê do Cliente</h3>
     <div id="modal-cli-body" style="font-size:13px;display:flex;flex-direction:column;gap:0"></div>
-    <div style="margin-top:16px;display:flex;justify-content:flex-end">
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px">
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-cli').classList.remove('open')">Fechar</button>
+      <button class="btn btn-or btn-sm" onclick="exportarDossie()">📄 Exportar PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIGURAÇÕES (API KEYS OPCIONAIS) -->
+<div class="modal-bg" id="modal-config">
+  <div class="modal" style="max-width:520px">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--orm)">⚙️ Configurações</h3>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:16px">API keys ficam salvas apenas neste navegador. O sistema funciona 100% sem elas — reservadas para recursos futuros de chat/IA que o escritório queira plugar, das ferramentas que já tiver à disposição.</div>
+    <div id="apikey-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+    <button class="btn btn-ghost btn-sm btn-full" onclick="addApiKeyRow()" style="margin-bottom:16px">+ Adicionar API Key</button>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="fecharConfig()">Fechar</button>
+      <button class="btn btn-gn" onclick="salvarApiKeys()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTABILIDADES (MULTIEMPRESA) -->
+<div class="modal-bg" id="modal-wk">
+  <div class="modal" style="max-width:480px">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--orm)">🏢 Contabilidades</h3>
+    <div id="wk-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+        <div class="fg"><label class="fl">Nova contabilidade — Nome</label><input class="fi" id="wk-novo-nome" placeholder="Nome do escritório"/></div>
+        <div class="fg"><label class="fl">CNPJ <span style="font-weight:400;text-transform:none;color:var(--dim)">(opcional)</span></label><input class="fi" id="wk-novo-cnpj" placeholder="00.000.000/0001-00"/></div>
+        <button class="btn btn-or btn-full" onclick="criarContabilidade()">➕ Criar contabilidade</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end" id="wk-close-wrap">
+      <button class="btn btn-ghost btn-sm" onclick="fecharContabilidades()">Fechar</button>
     </div>
   </div>
 </div>
@@ -539,7 +691,7 @@ function fmtCNPJ(el){let v=el.value.replace(/\D/g,'').slice(0,14);v=v.replace(/(
 
 // CHECKLIST
 function atualizarChecklist(){
-  const campos=['nome','cpf','cnpj','titulo','email','senha'];
+  const campos=['nome','cpf','cnpj','regime','whatsapp','email'];
   let ok=0;
   campos.forEach(c=>{
     const v=(document.getElementById('c-'+c)||{}).value||'';
@@ -555,7 +707,7 @@ function atualizarChecklist(){
 }
 
 // CLIENTES
-let clientes=JSON.parse(localStorage.getItem('afi_clientes')||'[]');
+let clientes=[], frases=[], pendencias=[], dividas=[], checklists={}, apikeys=[];
 
 function salvarCliente(){
   const nome=document.getElementById('c-nome').value.trim();
@@ -564,9 +716,10 @@ function salvarCliente(){
     id:Date.now(),nome,
     cpf:document.getElementById('c-cpf').value.trim(),
     cnpj:document.getElementById('c-cnpj').value.trim(),
-    titulo:document.getElementById('c-titulo').value.trim(),
+    regime:document.getElementById('c-regime').value,
+    whatsapp:document.getElementById('c-whatsapp').value.trim(),
     email:document.getElementById('c-email').value.trim(),
-    senha:document.getElementById('c-senha').value.trim(),
+    acesso:document.getElementById('c-acesso').value,
     obs:document.getElementById('c-obs').value.trim(),
     dt:new Date().toLocaleDateString('pt-BR')
   });
@@ -574,43 +727,125 @@ function salvarCliente(){
 }
 
 function salvarClientes(){
-  localStorage.setItem('afi_clientes',JSON.stringify(clientes));
+  localStorage.setItem(nsKey('clientes'),JSON.stringify(clientes));
   const n=clientes.length;const hdr=document.getElementById('hdr-clientes');
   if(n>0){hdr.textContent=n+' cliente'+(n!==1?'s':'');hdr.style.display='inline-flex';}else hdr.style.display='none';
 }
 
 function limparCadastro(){
-  ['nome','cpf','cnpj','titulo','email','senha','obs'].forEach(f=>document.getElementById('c-'+f).value='');
+  ['nome','cpf','cnpj','whatsapp','email','obs'].forEach(f=>document.getElementById('c-'+f).value='');
+  document.getElementById('c-regime').value='';
+  document.getElementById('c-acesso').value='';
   atualizarChecklist();
+}
+
+function popularSelectClientes(){
+  const opts='<option value="">Selecione...</option>'+clientes.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');
+  const pd=document.getElementById('pd-cliente'); if(pd) pd.innerHTML=opts;
+  const nv=document.getElementById('nv-cli'); if(nv) nv.innerHTML='<option value="">Cliente (opcional)</option>'+clientes.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');
 }
 
 function renderClientes(){
   const el=document.getElementById('cli-list');
   document.getElementById('cli-count').textContent=clientes.length+' cliente'+(clientes.length!==1?'s':'');
-  if(!clientes.length){el.innerHTML='<div class="empty">Nenhum cliente salvo ainda.</div>';return;}
-  el.innerHTML=clientes.slice(0,10).map((c,i)=>`
+  if(!clientes.length){el.innerHTML='<div class="empty">Nenhum cliente salvo ainda.</div>';}
+  else el.innerHTML=clientes.slice(0,10).map((c,i)=>`
     <div class="cli-row">
       <div><div style="font-weight:600;font-size:13px">${esc(c.nome)}</div>
-      <div style="font-size:10px;color:var(--dim)">${c.cnpj||c.cpf||'—'} · ${c.dt}</div></div>
+      <div style="font-size:10px;color:var(--dim)">${c.cnpj||c.cpf||'—'}${c.regime?' · '+esc(c.regime):''}</div></div>
       <div style="display:flex;gap:5px">
         <button class="btn btn-ghost btn-xs" onclick="verCliente(${i})">👁</button>
         <button class="btn btn-rd btn-xs" onclick="remCliente(${i})">✕</button>
       </div>
     </div>`).join('')+(clientes.length>10?`<div style="font-size:11px;color:var(--dim);text-align:center;padding:8px">+${clientes.length-10} mais...</div>`:'');
+  popularSelectClientes();
+}
+
+function itensChecklistPorRegime(regime){
+  const mapas={
+    'MEI':['Faturamento mensal','DAS do mes','Comprovante de pagamento','Notas emitidas','Declaracao anual (DASN)'],
+    'Simples Nacional':['Notas emitidas','Notas tomadas','Extratos bancarios','Pro-labore','Folha','DAS','Parcelamentos','Pendencias fiscais'],
+    'Pessoa Física':['Informe de rendimentos','Recibos','Despesas medicas','Aluguel','Extratos','Documentos patrimoniais'],
+  };
+  return mapas[regime]||['Documentos do mes','Guias do mes','Comprovantes de pagamento'];
+}
+function toggleChecklist(clienteId,item,val){
+  if(!checklists[clienteId])checklists[clienteId]={};
+  checklists[clienteId][item]=val;
+  localStorage.setItem(nsKey('checklists'),JSON.stringify(checklists));
+}
+function resetarChecklist(clienteId){
+  if(!confirm('Zerar o checklist deste cliente para o novo mes?'))return;
+  checklists[clienteId]={};
+  localStorage.setItem(nsKey('checklists'),JSON.stringify(checklists));
+  const i=clientes.findIndex(c=>c.id===clienteId);
+  if(i>-1)verCliente(i);
 }
 
 function verCliente(i){
   const c=clientes[i];
-  document.getElementById('modal-cli-body').innerHTML=[
-    ['Nome',c.nome],['CPF',c.cpf],['CNPJ',c.cnpj],
-    ['Título',c.titulo],['E-mail',c.email],
-    ['GOV.br',c.senha?'••••••••':'—'],['Obs',c.obs],['Cadastro',c.dt]
+  const pendCli=pendencias.filter(p=>p.clienteId===c.id&&p.status!=='resolvida');
+  const guiasCli=dividas.filter(d=>d.clienteId===c.id);
+  const chkItems=itensChecklistPorRegime(c.regime);
+  const chkState=checklists[c.id]||{};
+  const chkFeitos=chkItems.filter(it=>chkState[it]).length;
+
+  let html=[
+    ['Nome',c.nome],['CPF',c.cpf],['CNPJ',c.cnpj],['Regime',c.regime],
+    ['WhatsApp',c.whatsapp],['E-mail',c.email],['Situacao de Acesso',c.acesso||'Nao definido'],
+    ['Obs',c.obs],['Cadastro',c.dt]
   ].filter(([,v])=>v).map(([k,v])=>`
     <div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <span style="font-weight:700;color:var(--muted);min-width:75px;font-size:10px;text-transform:uppercase">${k}</span>
+      <span style="font-weight:700;color:var(--muted);min-width:110px;font-size:10px;text-transform:uppercase">${k}</span>
       <span style="font-size:13px">${esc(v)}</span>
     </div>`).join('');
+
+  html+=`<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Pendencias abertas (${pendCli.length})</div>`;
+  html+=pendCli.length
+    ? pendCli.map(p=>`<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--bg3)">- ${esc(p.tipo)} <span style="color:var(--dim)">(${esc(p.urgencia)})</span></div>`).join('')
+    : `<div style="font-size:12px;color:var(--dim);padding:5px 0">Nenhuma pendencia em aberto.</div>`;
+
+  html+=`<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Guias/debitos vinculados (${guiasCli.length})</div>`;
+  html+=guiasCli.length
+    ? guiasCli.map(d=>`<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--bg3)">- ${esc(d.tributo)} - R$ ${Number(d.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})} <span style="color:var(--dim)">(${esc(statusLabel(d.status))})</span></div>`).join('')
+    : `<div style="font-size:12px;color:var(--dim);padding:5px 0">Nenhuma guia vinculada ainda.</div>`;
+
+  html+=`<div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Checklist mensal (${chkFeitos}/${chkItems.length})</div>
+      <button class="btn btn-ghost btn-xs" onclick="resetarChecklist(${c.id})">Zerar mes</button>
+    </div>`;
+  html+=chkItems.map(it=>`<label class="chk-item"><input type="checkbox" ${chkState[it]?'checked':''} onchange="toggleChecklist(${c.id},'${it.replace(/'/g,"\\'")}',this.checked)"/> ${esc(it)}</label>`).join('');
+
+  document.getElementById('modal-cli-body').innerHTML=html;
+  document.getElementById('modal-cli').dataset.cliId=c.id;
   document.getElementById('modal-cli').classList.add('open');
+}
+
+function exportarDossie(){
+  const id=Number(document.getElementById('modal-cli').dataset.cliId);
+  const c=clientes.find(x=>x.id===id);
+  if(!c){alert('Cliente nao encontrado.');return;}
+  const { jsPDF }=window.jspdf;
+  if(!jsPDF){alert('Biblioteca jsPDF nao carregada.');return;}
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  doc.setFillColor(234,88,12);doc.rect(0,0,210,26,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(15);doc.setFont('helvetica','bold');
+  doc.text('Dossie - '+c.nome,14,12);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text('Gerado em '+new Date().toLocaleDateString('pt-BR'),14,20);
+  doc.setTextColor(30,30,30);
+  let y=36;
+  const linha=(l)=>{doc.setFontSize(10);doc.text(l,14,y);y+=6;if(y>280){doc.addPage();y=20;}};
+  linha('CPF: '+(c.cpf||'-')+'   CNPJ: '+(c.cnpj||'-'));
+  linha('Regime: '+(c.regime||'-')+'   WhatsApp: '+(c.whatsapp||'-')+'   E-mail: '+(c.email||'-'));
+  linha('Situacao de acesso: '+(c.acesso||'Nao definido'));
+  y+=2;doc.setFont('helvetica','bold');linha('Pendencias abertas:');doc.setFont('helvetica','normal');
+  const pendCli=pendencias.filter(p=>p.clienteId===c.id&&p.status!=='resolvida');
+  if(!pendCli.length)linha('  Nenhuma.');else pendCli.forEach(p=>linha('  - '+p.tipo+' ('+p.urgencia+')'));
+  y+=2;doc.setFont('helvetica','bold');linha('Guias/debitos:');doc.setFont('helvetica','normal');
+  const guiasCli=dividas.filter(d=>d.clienteId===c.id);
+  if(!guiasCli.length)linha('  Nenhuma.');else guiasCli.forEach(d=>linha('  - '+d.tributo+' - R$ '+Number(d.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})+' ('+statusLabel(d.status)+')'));
+  doc.save('dossie_'+c.nome.replace(/[^a-z0-9]+/gi,'_')+'_'+hoje()+'.pdf');
 }
 
 function remCliente(i){
@@ -620,31 +855,113 @@ function remCliente(i){
 
 function exportarClientesCSV(){
   if(!clientes.length){alert('Nenhum cliente salvo.');return;}
-  let csv='Nome,CPF,CNPJ,Email,Data\n';
-  clientes.forEach(c=>{csv+=[c.nome,c.cpf,c.cnpj,c.email,c.dt].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')+'\n';});
+  let csv='Nome,CPF,CNPJ,Regime,WhatsApp,Email,Situacao de Acesso,Data\n';
+  clientes.forEach(c=>{csv+=[c.nome,c.cpf,c.cnpj,c.regime,c.whatsapp,c.email,c.acesso,c.dt].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(',')+'\n';});
   baixar('\uFEFF'+csv,'clientes_'+hoje()+'.csv','text/csv;charset=utf-8');
 }
 
-// LEVANTAMENTO
-function remDivida(btn){btn.closest('tr').remove();recalcDiv();}
+// PENDENCIAS
+function salvarPendencia(){
+  const clienteId=document.getElementById('pd-cliente').value;
+  const tipo=document.getElementById('pd-tipo').value;
+  const urgencia=document.getElementById('pd-urgencia').value;
+  const resp=document.getElementById('pd-resp').value.trim();
+  const obs=document.getElementById('pd-obs').value.trim();
+  if(!clienteId){alert('Selecione o cliente.');return;}
+  const cli=clientes.find(c=>c.id===Number(clienteId));
+  pendencias.unshift({
+    id:Date.now(),clienteId:Number(clienteId),clienteNome:cli?cli.nome:'-',
+    tipo,urgencia,resp,obs,status:'aberta',dt:new Date().toLocaleDateString('pt-BR')
+  });
+  salvarPendencias();renderPendencias();
+  document.getElementById('pd-resp').value='';document.getElementById('pd-obs').value='';
+}
+function salvarPendencias(){
+  localStorage.setItem(nsKey('pendencias'),JSON.stringify(pendencias));
+  const abertas=pendencias.filter(p=>p.status!=='resolvida').length;
+  const hdr=document.getElementById('hdr-pend');
+  if(abertas>0){hdr.textContent=abertas+' pendente'+(abertas!==1?'s':'');hdr.style.display='inline-flex';}else hdr.style.display='none';
+}
+function renderPendencias(){
+  const filtro=document.getElementById('pd-filtro').value;
+  const lista=pendencias.filter(p=>filtro==='todas'?true:filtro==='resolvida'?p.status==='resolvida':p.status!=='resolvida');
+  document.getElementById('pd-count').textContent=lista.length;
+  const el=document.getElementById('pd-list');
+  if(!lista.length){el.innerHTML='<div class="empty">Nenhuma pendencia encontrada.</div>';return;}
+  el.innerHTML=lista.map(p=>`
+    <div class="pend-row urg-${p.urgencia} ${p.status==='resolvida'?'resolvida':''}">
+      <div>
+        <div style="font-weight:700">${esc(p.tipo)}</div>
+        <div style="color:var(--dim);margin-top:2px">${esc(p.clienteNome)} - desde ${p.dt}${p.resp?' - resp: '+esc(p.resp):''}</div>
+        ${p.obs?`<div style="margin-top:4px">${esc(p.obs)}</div>`:''}
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        ${p.status!=='resolvida'?`<button class="btn btn-gn btn-xs" onclick="resolverPendencia(${p.id})">Resolver</button>`:''}
+        <button class="btn btn-rd btn-xs" onclick="remPendencia(${p.id})">\u2715</button>
+      </div>
+    </div>`).join('');
+}
+function resolverPendencia(id){
+  const p=pendencias.find(x=>x.id===id);if(!p)return;
+  p.status='resolvida';p.dtResolucao=new Date().toLocaleDateString('pt-BR');
+  salvarPendencias();renderPendencias();
+}
+function remPendencia(id){
+  if(!confirm('Remover esta pendencia?'))return;
+  pendencias=pendencias.filter(x=>x.id!==id);
+  salvarPendencias();renderPendencias();
+}
+
+// LEVANTAMENTO (GUIAS/DIVIDAS)
+const STATUS_BADGE={
+  aberta:'badge-bl', vencida:'badge-or', paga:'badge-gn', parcelada:'badge-am',
+  'aguardando comprovante':'badge-am', 'aguardando cliente':'badge-am', conferida:'badge-gn'
+};
+function statusLabel(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : 'Aberta'; }
+
 function addDivida(){
+  const cliId=document.getElementById('nv-cli').value;
   const t=document.getElementById('nv-tri').value.trim();
   const d=document.getElementById('nv-dt').value.trim();
   const v=document.getElementById('nv-val').value.trim();
+  const status=document.getElementById('nv-status').value;
   if(!t||!v){alert('Preencha Tributo e Valor.');return;}
-  const tr=document.createElement('tr');
-  tr.innerHTML=`<td>${esc(t)}</td><td>${d||'—'}</td><td>${v.startsWith('R$')?v:'R$ '+v}</td>
-    <td><span class="badge badge-or">Em atraso</span></td>
-    <td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td>`;
-  document.getElementById('div-body').appendChild(tr);
+  const valorNum=parseFloat(v.replace(/[^\d,.]/g,'').replace(/\.(?=\d{3})/g,'').replace(',','.'))||0;
+  const cli=clientes.find(c=>c.id===Number(cliId));
+  dividas.unshift({
+    id:Date.now(), clienteId: cliId?Number(cliId):null, clienteNome: cli?cli.nome:'Nao vinculado',
+    tributo:t, data:d||'—', valor:valorNum, status, dt:new Date().toLocaleDateString('pt-BR')
+  });
+  salvarDividas();renderDividas();
   document.getElementById('nv-tri').value='';document.getElementById('nv-dt').value='';document.getElementById('nv-val').value='';
+}
+function remDivida(id){
+  dividas=dividas.filter(d=>d.id!==id);
+  salvarDividas();renderDividas();
+}
+function salvarDividas(){ localStorage.setItem(nsKey('guias'), JSON.stringify(dividas)); }
+function mudarStatusDivida(id,status){
+  const d=dividas.find(x=>x.id===id); if(!d) return;
+  d.status=status; salvarDividas();
+}
+function renderDividas(){
+  const tbody=document.getElementById('div-body');
+  if(!dividas.length){ tbody.innerHTML='<tr><td colspan="6"><div class="empty">Nenhuma guia/debito registrado ainda.</div></td></tr>'; recalcDiv(); return; }
+  tbody.innerHTML=dividas.map(d=>`
+    <tr>
+      <td>${esc(d.clienteNome||'Nao vinculado')}</td>
+      <td>${esc(d.tributo)}</td>
+      <td>${esc(d.data||'—')}</td>
+      <td>R$ ${Number(d.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td><select class="fi" style="padding:3px 6px;font-size:11px" onchange="mudarStatusDivida(${d.id},this.value)">
+        ${Object.keys(STATUS_BADGE).map(s=>`<option value="${s}" ${s===d.status?'selected':''}>${statusLabel(s)}</option>`).join('')}
+      </select></td>
+      <td><button class="btn btn-ghost btn-xs" onclick="remDivida(${d.id})">✕</button></td>
+    </tr>`).join('');
   recalcDiv();
 }
 function recalcDiv(){
-  let total=0;
-  document.querySelectorAll('#div-body td:nth-child(3)').forEach(td=>{
-    total+=parseFloat(td.textContent.replace(/[^\d,]/g,'').replace(',','.'))||0;
-  });
+  const total=dividas.reduce((s,d)=>s+(Number(d.valor)||0),0);
   document.getElementById('tot-div').textContent='R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2});
 }
 // ── LEVANTAMENTO: Upload handler ────────────────────────────────────────────
@@ -716,6 +1033,9 @@ function levParsearTexto(texto){
     { re: /FGTS/i,                                              nome: 'FGTS' },
     { re: /ICMS/i,                                              nome: 'ICMS' },
     { re: /Parcelamento|PERT|REFIS/i,                          nome: 'Parcelamento' },
+    { re: /\bIBS\b|Imposto\s*sobre\s*Bens\s*e\s*Servi/i,        nome: 'IBS' },
+    { re: /\bCBS\b|Contribui[cç][aã]o\s*sobre\s*Bens\s*e\s*Servi/i, nome: 'CBS' },
+    { re: /Imposto\s*Seletivo/i,                                nome: 'Imposto Seletivo' },
   ];
 
   // Divide o texto em blocos por linha/parágrafo
@@ -783,7 +1103,7 @@ function levParsearTexto(texto){
   return itens;
 }
 
-// Adiciona itens na tabela de dívidas
+// Adiciona itens na lista de guias/dívidas
 function levAdicionarItens(itens, nomeArq){
   if(!itens.length){
     levSetLoading(false);
@@ -796,20 +1116,19 @@ function levAdicionarItens(itens, nomeArq){
     return;
   }
 
-  const tbody = document.getElementById('div-body');
-  itens.forEach(item => {
-    const tr = document.createElement('tr');
-    tr.style.animation = 'fadeIn .4s ease';
-    tr.innerHTML = `
-      <td>${esc(item.tributo||'—')}</td>
-      <td>${esc(item.data||'—')}</td>
-      <td>${esc(item.valor||'—')}</td>
-      <td><span class="badge ${item.status==='A vencer'?'badge-bl':item.status==='Em atraso'?'badge-or':'badge-am'}">${esc(item.status||'Em aberto')}</span></td>
-      <td><button class="btn btn-ghost btn-xs" onclick="remDivida(this)">✕</button></td>`;
-    tbody.appendChild(tr);
+  const cliSel = document.getElementById('nv-cli');
+  const cli = cliSel ? clientes.find(c=>c.id===Number(cliSel.value)) : null;
+  const statusMap = {'Em atraso':'vencida','A vencer':'aberta','Em aberto':'aberta'};
+  itens.forEach((item,idx) => {
+    const valorNum = parseFloat(String(item.valor||'').replace(/[^\d,]/g,'').replace(',','.')) || 0;
+    dividas.unshift({
+      id: Date.now()+idx, clienteId: cli?cli.id:null, clienteNome: cli?cli.nome:'Nao vinculado',
+      tributo: item.tributo||'—', data: item.data||'—', valor: valorNum,
+      status: statusMap[item.status]||'aberta', dt:new Date().toLocaleDateString('pt-BR')
+    });
   });
-
-  recalcDiv();
+  salvarDividas();
+  renderDividas();
   levSetLoading(false);
 
   const zone = document.getElementById('lev-drop-content');
@@ -918,7 +1237,7 @@ function exportarLevantamentoPDF(){
   doc.setTextColor(255,255,255);
   doc.setFontSize(16);
   doc.setFont('helvetica','bold');
-  doc.text('Levantamento de Dívidas', 14, 13);
+  doc.text('Levantamento de Guias e Dividas', 14, 13);
   doc.setFontSize(9);
   doc.setFont('helvetica','normal');
   doc.text('Gerado em: ' + dataHoje, 14, 22);
@@ -926,14 +1245,14 @@ function exportarLevantamentoPDF(){
   // Tabela
   doc.autoTable({
     startY: 34,
-    head: [['Tributo','Data','Valor','Status']],
-    body: linhas.map(r => [r.tributo, r.data, r.valor, r.status]),
+    head: [['Cliente','Tributo','Data','Valor','Status']],
+    body: linhas.map(r => [r.cliente, r.tributo, r.data, r.valor, r.status]),
     styles: { fontSize: 10, cellPadding: 4 },
     headStyles: { fillColor: [234, 88, 12], textColor: 255, fontStyle:'bold' },
     alternateRowStyles: { fillColor: [255, 247, 237] },
     columnStyles: {
-      2: { halign: 'right' },
-      3: { halign: 'center' }
+      3: { halign: 'right' },
+      4: { halign: 'center' }
     },
     margin: { left: 14, right: 14 },
     tableLineColor: [229, 231, 235],
@@ -963,13 +1282,13 @@ function exportarLevantamentoExcel(){
 
   // Monta dados
   const wsData = [
-    ['Levantamento de Dívidas'],
+    ['Levantamento de Guias e Dividas'],
     ['Gerado em: ' + dataHoje],
     [],
-    ['Tributo','Data','Valor','Status'],
-    ...linhas.map(r => [r.tributo, r.data, r.valor, r.status]),
+    ['Cliente','Tributo','Data','Valor','Status'],
+    ...linhas.map(r => [r.cliente, r.tributo, r.data, r.valor, r.status]),
     [],
-    ['','','Total Estimado:', total],
+    ['','','','Total Estimado:', total],
   ];
 
   const wb = XLSX.utils.book_new();
@@ -977,35 +1296,28 @@ function exportarLevantamentoExcel(){
 
   // Larguras das colunas
   ws['!cols'] = [
-    { wch: 28 }, { wch: 14 }, { wch: 18 }, { wch: 16 }
+    { wch: 22 }, { wch: 26 }, { wch: 14 }, { wch: 16 }, { wch: 18 }
   ];
 
-  // Mescla célula do título (A1:D1)
+  // Mescla célula do título (A1:E1)
   ws['!merges'] = [
-    { s:{r:0,c:0}, e:{r:0,c:3} },
-    { s:{r:1,c:0}, e:{r:1,c:3} },
+    { s:{r:0,c:0}, e:{r:0,c:4} },
+    { s:{r:1,c:0}, e:{r:1,c:4} },
   ];
 
   XLSX.utils.book_append_sheet(wb, ws, 'Levantamento');
   XLSX.writeFile(wb, 'levantamento_dividas_' + hoje() + '.xlsx');
 }
 
-// ── Coleta todas as linhas da tabela de dívidas ─────────────────────────────
+// ── Coleta todas as linhas de guias/dívidas ─────────────────────────────
 function coletarLinhasDivida(){
-  const rows = document.querySelectorAll('#div-body tr');
-  const result = [];
-  rows.forEach(tr => {
-    const tds = tr.querySelectorAll('td');
-    if(tds.length >= 4){
-      result.push({
-        tributo: tds[0].textContent.trim(),
-        data:    tds[1].textContent.trim(),
-        valor:   tds[2].textContent.trim(),
-        status:  tds[3].textContent.trim(),
-      });
-    }
-  });
-  return result;
+  return dividas.map(d=>({
+    cliente: d.clienteNome||'Nao vinculado',
+    tributo: d.tributo,
+    data:    d.data||'—',
+    valor:   'R$ '+Number(d.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2}),
+    status:  statusLabel(d.status),
+  }));
 }
 
 // PLANILHA — fix "Bad compressed size"
@@ -1046,13 +1358,16 @@ function processarXL(file){
         rawImport=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
         resetColMap();
       }
+      resetColMap();
       if(!rawImport.length){xlStatus('❌ Arquivo vazio ou sem dados.','err');return;}
+      const colsRemovidas = colunasSenha(rawImport);
+      if(colsRemovidas.length){ rawImport = sanitizarPlanilha(rawImport); resetColMap(); }
       const hdrs=Object.keys(rawImport[0]);
       document.getElementById('xl-head').innerHTML='<tr>'+hdrs.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>';
       document.getElementById('xl-body').innerHTML=rawImport.slice(0,5).map(r=>'<tr>'+hdrs.map(h=>'<td>'+esc(String(r[h]))+'</td>').join('')+'</tr>').join('');
       document.getElementById('xl-prev-title').textContent=file.name+' — '+rawImport.length+' registros (mostrando 5)';
       document.getElementById('xl-preview').style.display='block';
-      xlStatus('✅ '+rawImport.length+' registros lidos. Confirme abaixo.','ok');
+      xlStatus('✅ '+rawImport.length+' registros lidos.'+(colsRemovidas.length?' 🔒 '+colsRemovidas.length+' coluna(s) de senha/acesso removida(s) automaticamente por seguranca.':'')+' Confirme abaixo.','ok');
     }catch(err){xlStatus('❌ Erro: '+err.message,'err');}
   };
   reader.readAsArrayBuffer(file);
@@ -1063,19 +1378,34 @@ function xlStatus(msg,tipo){
   el.textContent=msg;el.className='status '+(tipo==='ok'?'s-ok':tipo==='info'?'s-info':'s-err');el.style.display='flex';
 }
 
+// Detecta e remove colunas de senha/credencial antes de qualquer uso/armazenamento
+function colunasSenha(dados){
+  if(!dados || !dados.length) return [];
+  const hdrs = Object.keys(dados[0]);
+  const map = buildColMap(dados);
+  const reSenha = /senha|password|pwd|^pass$/i;
+  return hdrs.filter(h => reSenha.test(h) || reSenha.test(map[h]||''));
+}
+function sanitizarPlanilha(dados){
+  const cols = colunasSenha(dados);
+  if(!cols.length) return dados;
+  return dados.map(r=>{ const o={...r}; cols.forEach(c=>delete o[c]); return o; });
+}
+
 async function confirmarImport(){
   if(!rawImport.length)return;
   const fc=keys=>Object.keys(rawImport[0]).find(h=>keys.some(k=>h.toLowerCase().includes(k)))||'';
   const cn=fc(['nome','razao','cliente','name','empresa']);
   const cd=fc(['cnpj','cpf','doc','documento']);
   const ce=fc(['email','e-mail','mail']);
-  const cs=fc(['senha','gov','password']);
+  const cr=fc(['regime','tributo','tipo']);
   const imp=rawImport.map((r,i)=>({
     id:Date.now()+i,
     nome:cn?String(r[cn]).trim():'Cliente '+(i+1),
     cnpj:cd?String(r[cd]).trim():'',
     email:ce?String(r[ce]).trim():'',
-    senha:cs?String(r[cs]).trim():'',
+    regime:cr?String(r[cr]).trim():'',
+    acesso:'',
     obs:'Importado',dt:new Date().toLocaleDateString('pt-BR')
   })).filter(c=>c.nome&&c.nome!=='undefined');
   imp.forEach(im=>{if(!clientes.find(c=>c.nome===im.nome&&c.cnpj===im.cnpj))clientes.push(im);});
@@ -1108,29 +1438,29 @@ async function limparPlanilhaSalva(){
 }
 
 // FRASES — id único para deleção correta (inclusive frases padrão)
-let frases=JSON.parse(localStorage.getItem('afi_frases')||'null');
-if(!frases){
-  frases=[
+function frasesPadrao(){
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  return [
     {id:'default_1',titulo:'Boas-vindas ao escritório',categoria:'boas-vindas',
      texto:'Olá! Seja bem-vindo(a) ao nosso escritório de contabilidade. Ficamos felizes em tê-lo(a) como cliente. Nossa equipe está à disposição para auxiliar em todas as suas necessidades fiscais e contábeis.',
-     dt:new Date().toLocaleDateString('pt-BR')},
+     dt:hoje},
     {id:'default_2',titulo:'DAS MEI em atraso',categoria:'cobranca',
      texto:'Identificamos que há DAS MEI em aberto no seu cadastro. Para evitar pendências junto à Receita Federal e possível dívida ativa, solicitamos que realize a regularização o quanto antes. Em caso de dúvidas, entre em contato conosco.',
-     dt:new Date().toLocaleDateString('pt-BR')},
+     dt:hoje},
     {id:'default_3',titulo:'Orientação sobre parcelamento',categoria:'orientacao',
      texto:'Informamos que é possível realizar o parcelamento dos débitos do Simples Nacional diretamente pelo portal PGMEI (para MEI) ou pelo e-CAC. O parcelamento pode ser feito em até 60 meses, com redução de multa e juros conforme o programa vigente.',
-     dt:new Date().toLocaleDateString('pt-BR')}
+     dt:hoje},
+    {id:'default_4',titulo:'Aviso — Reforma Tributária 2026',categoria:'orientacao',
+     texto:'Prezado(a) cliente, a partir de 2026 começa a fase de testes da Reforma Tributária (IBS/CBS). Isso não gera aumento de carga tributária neste primeiro momento, mas pode exigir ajustes em notas fiscais e no seu sistema de emissão. Nossa equipe está acompanhando as mudanças e vai orientá-lo(a) em cada etapa — qualquer dúvida, fale com a gente.',
+     dt:hoje},
   ];
-  localStorage.setItem('afi_frases',JSON.stringify(frases));
 }
-// Migração: garante id em frases antigas sem id
-frases=frases.map((f,i)=>f.id?f:{...f,id:'mig_'+Date.now()+'_'+i});
 
 const catLabel={cobranca:'💰 Cobrança',regularizacao:'✅ Regularização',orientacao:'📌 Orientação','boas-vindas':'👋 Boas-vindas',outros:'📎 Outros'};
 const catCls={cobranca:'cat-cobranca',regularizacao:'cat-regularizacao',orientacao:'cat-orientacao','boas-vindas':'cat-boas-vindas',outros:'cat-outros'};
 
 function salvarFrases(){
-  localStorage.setItem('afi_frases',JSON.stringify(frases));
+  localStorage.setItem(nsKey('frases'),JSON.stringify(frases));
   const n=frases.length;const hdr=document.getElementById('hdr-frases');
   if(n>0){hdr.textContent=n+' frase'+(n!==1?'s':'');hdr.style.display='inline-flex';}else hdr.style.display='none';
 }
@@ -1220,10 +1550,6 @@ function salvarEdicao(){
   salvarFrases();fecharModal();renderFrases();
 }
 
-document.getElementById('modal-edit').addEventListener('click',e=>{if(e.target===e.currentTarget)fecharModal();});
-document.getElementById('modal-cli').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('modal-cli').classList.remove('open');});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharModal();document.getElementById('modal-cli').classList.remove('open');}});
-
 // ──────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════
 // ASSISTENTE FISCAL INTELIGENTE — 100% JavaScript, sem API
@@ -1253,7 +1579,7 @@ function getDados() {
   if (rawImport && rawImport.length > 0) return rawImport;
   if (clientes  && clientes.length  > 0) return clientes.map(c => ({
     Nome: c.nome, CNPJ: c.cnpj, CPF: c.cpf, Email: c.email,
-    Título: c.titulo, Observação: c.obs
+    Regime: c.regime, WhatsApp: c.whatsapp, Situacao: c.acesso, Observacao: c.obs
   }));
   return [];
 }
@@ -1429,6 +1755,7 @@ function classificarPergunta(q) {
   if (/regime/.test(n) && /cliente|listar|quem/.test(n)) return 'FILTRAR_REGIME';
   if (/coluna|campo|campo/.test(n)) return 'VER_COLUNAS';
   // Perguntas gerais sobre fiscalidade (sem planilha necessária)
+  if (/reforma tribut|\bibs\b|\bcbs\b|imposto seletivo/.test(n)) return 'INFO_REFORMA';
   if (/das mei|guia mei/.test(n)) return 'INFO_DAS_MEI';
   if (/dívida ativa|divida ativa/.test(n)) return 'INFO_DIVIDA_ATIVA';
   if (/parcelamento/.test(n)) return 'INFO_PARCELAMENTO';
@@ -1595,6 +1922,22 @@ Regime unificado que recolhe vários impostos em uma guia (DAS).
 **Cancelamento:**
 • NFS-e: consultar regras do município (geralmente até 24h ou 7 dias)
 • NF-e: até 24h após autorização, se não houver circulação`,
+
+    INFO_REFORMA: `🔄 **Reforma Tributária — IBS e CBS (2026 em diante)**
+
+A partir de 2026 começa a fase de testes da Reforma Tributária (Emenda Constitucional 132/2023), que substitui gradualmente PIS, Cofins, IPI, ICMS e ISS por dois novos tributos:
+
+• **CBS** (Contribuição sobre Bens e Serviços) — federal, substitui PIS/Cofins
+• **IBS** (Imposto sobre Bens e Serviços) — estadual/municipal, substitui ICMS/ISS
+• **Imposto Seletivo** — incide sobre produtos prejudiciais à saúde/meio ambiente (cigarros, bebidas, etc.)
+
+📅 **Cronograma resumido:**
+• 2026 — fase de testes: CBS 0,9% + IBS 0,1%, sem aumento de carga (compensável na apuração)
+• 2027 — CBS passa a valer de fato; PIS/Cofins são extintos; IPI zerado (exceto Zona Franca de Manaus)
+• 2029 a 2032 — transição gradual do ICMS e ISS para o IBS
+• 2033 — sistema pleno: fim definitivo do ICMS e do ISS
+
+⚠️ Datas e alíquotas dependem de regulamentação complementar — confirme sempre as regras vigentes no Domínio e em fontes oficiais antes de orientar o cliente.`,
 
     INFO_DEFIS: `📋 **DEFIS — Declaração de Informações Socioeconômicas e Fiscais**
 
@@ -1917,7 +2260,7 @@ async function salvarPlanilhaDB(dados, nomeArquivo) {
     return new Promise((resolve, reject) => {
       const tx = database.transaction(STORE_PLANILHA, 'readwrite');
       const store = tx.objectStore(STORE_PLANILHA);
-      store.put({ id: 'planilha_principal', dados, nomeArquivo, dt: new Date().toISOString() });
+      store.put({ id: contabilidadeAtivaId, dados, nomeArquivo, dt: new Date().toISOString() });
       tx.oncomplete = () => resolve(true);
       tx.onerror    = (e) => reject(e.target.error);
     });
@@ -1933,7 +2276,7 @@ async function carregarPlanilhaDB() {
     return new Promise((resolve, reject) => {
       const tx = database.transaction(STORE_PLANILHA, 'readonly');
       const store = tx.objectStore(STORE_PLANILHA);
-      const req = store.get('planilha_principal');
+      const req = store.get(contabilidadeAtivaId);
       req.onsuccess = (e) => resolve(e.target.result || null);
       req.onerror   = (e) => reject(e.target.error);
     });
@@ -1948,37 +2291,148 @@ async function limparPlanilhaDB() {
     const database = await abrirDB();
     return new Promise((resolve) => {
       const tx = database.transaction(STORE_PLANILHA, 'readwrite');
-      tx.objectStore(STORE_PLANILHA).delete('planilha_principal');
+      tx.objectStore(STORE_PLANILHA).delete(contabilidadeAtivaId);
       tx.oncomplete = () => resolve(true);
     });
   } catch(e) { return false; }
 }
 
-// INIT
-async function inicializar() {
-  renderClientes();
-  renderFrases();
-  salvarFrases();
-  salvarClientes();
-
-  // Chave API removida — assistente funciona sem API
-
-  // Restaura planilha do IndexedDB
+async function carregarPlanilhaAtiva(){
   xlStatus('⏳ Verificando planilha salva...', 'info');
   const salva = await carregarPlanilhaDB();
   if (salva && salva.dados && salva.dados.length) {
     rawImport = salva.dados;
     ultimoNomeArquivo = salva.nomeArquivo || 'Planilha';
+    resetColMap();
     const hdrs = Object.keys(rawImport[0]);
     document.getElementById('xl-head').innerHTML = '<tr>'+hdrs.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>';
     document.getElementById('xl-body').innerHTML = rawImport.slice(0,5).map(r=>'<tr>'+hdrs.map(h=>'<td>'+esc(String(r[h]))+'</td>').join('')+'</tr>').join('');
     document.getElementById('xl-prev-title').textContent = (salva.nomeArquivo||'Planilha') + ' — ' + rawImport.length + ' registros (salva em ' + new Date(salva.dt).toLocaleDateString('pt-BR') + ')';
     document.getElementById('xl-preview').style.display = 'block';
     xlStatus('✅ Planilha restaurada automaticamente: '+rawImport.length+' registros.', 'ok');
-    atualizarBannerContexto();
+    document.getElementById('btn-limpar-db').style.display='inline-flex';
   } else {
+    document.getElementById('xl-preview').style.display='none';
+    document.getElementById('xl-ok').style.display='none';
+    document.getElementById('btn-limpar-db').style.display='none';
     document.getElementById('xl-status').style.display = 'none';
   }
+  atualizarBannerContexto();
+}
+
+// ──────────────────────────────────────
+// WORKSPACE / MULTIEMPRESA — contabilidades isoladas
+// ──────────────────────────────────────
+let contabilidades = JSON.parse(localStorage.getItem('ac_contabilidades')||'[]');
+let contabilidadeAtivaId = localStorage.getItem('ac_ativa') || '';
+
+function nsKey(base){ return 'afi_'+contabilidadeAtivaId+'_'+base; }
+function contabilidadeAtiva(){ return contabilidades.find(c=>c.id===contabilidadeAtivaId) || null; }
+
+function salvarContabilidades(){
+  localStorage.setItem('ac_contabilidades', JSON.stringify(contabilidades));
+  localStorage.setItem('ac_ativa', contabilidadeAtivaId);
+}
+
+function criarContabilidade(){
+  const nome = document.getElementById('wk-novo-nome').value.trim();
+  const cnpj = document.getElementById('wk-novo-cnpj').value.trim();
+  if(!nome){ alert('Informe o nome da contabilidade.'); return; }
+  const id = 'ct_'+Date.now();
+  contabilidades.push({id, nome, cnpj, dt:new Date().toLocaleDateString('pt-BR')});
+  document.getElementById('wk-novo-nome').value='';
+  document.getElementById('wk-novo-cnpj').value='';
+  trocarContabilidade(id);
+}
+
+async function trocarContabilidade(id){
+  contabilidadeAtivaId = id;
+  salvarContabilidades();
+  document.getElementById('modal-wk').classList.remove('open');
+  await carregarDadosDaContabilidade();
+}
+
+function abrirContabilidades(){
+  renderWkList();
+  document.getElementById('modal-wk').classList.add('open');
+  document.getElementById('wk-close-wrap').style.display = contabilidades.length ? 'flex' : 'none';
+}
+function fecharContabilidades(){
+  if(!contabilidades.length) return; // exige ao menos uma contabilidade criada
+  document.getElementById('modal-wk').classList.remove('open');
+}
+function renderWkList(){
+  const el = document.getElementById('wk-list');
+  if(!contabilidades.length){ el.innerHTML='<div class="empty">Nenhuma contabilidade cadastrada ainda. Crie a primeira abaixo.</div>'; return; }
+  el.innerHTML = contabilidades.map(c=>`
+    <div class="cli-row" style="cursor:pointer" onclick="trocarContabilidade('${c.id}')">
+      <div><div style="font-weight:600;font-size:13px">${esc(c.nome)}${c.id===contabilidadeAtivaId?' <span style="color:var(--gn);font-size:10px">● ativa</span>':''}</div>
+      <div style="font-size:10px;color:var(--dim)">${esc(c.cnpj)||'—'} · desde ${c.dt}</div></div>
+    </div>`).join('');
+}
+
+// ──────────────────────────────────────
+// CONFIGURAÇÕES — API keys opcionais (uso futuro)
+// ──────────────────────────────────────
+function abrirConfig(){ renderApiKeys(); document.getElementById('modal-config').classList.add('open'); }
+function fecharConfig(){ document.getElementById('modal-config').classList.remove('open'); }
+function renderApiKeys(){
+  const el = document.getElementById('apikey-list');
+  if(!apikeys.length){ el.innerHTML = '<div class="empty" style="padding:10px">Nenhuma API key cadastrada.</div>'; return; }
+  el.innerHTML = apikeys.map((k,i)=>`
+    <div class="apikey-row">
+      <input class="fi" placeholder="Nome do serviço" value="${esc(k.nome)}" oninput="apikeys[${i}].nome=this.value" style="flex:1"/>
+      <input class="fi" placeholder="API Key" value="${esc(k.chave)}" oninput="apikeys[${i}].chave=this.value" style="flex:2" type="password"/>
+      <button class="btn btn-rd btn-xs" onclick="removeApiKeyRow(${i})">✕</button>
+    </div>`).join('');
+}
+function addApiKeyRow(){ apikeys.push({nome:'',chave:''}); renderApiKeys(); }
+function removeApiKeyRow(i){ apikeys.splice(i,1); renderApiKeys(); }
+function salvarApiKeys(){
+  apikeys = apikeys.filter(k=>k.nome.trim()||k.chave.trim());
+  localStorage.setItem(nsKey('apikeys'), JSON.stringify(apikeys));
+  renderApiKeys();
+  fecharConfig();
+}
+
+// ──────────────────────────────────────
+// CARREGA TODOS OS DADOS DA CONTABILIDADE ATIVA
+// ──────────────────────────────────────
+async function carregarDadosDaContabilidade(){
+  const wk = contabilidadeAtiva();
+  document.getElementById('wk-nome').textContent = wk ? wk.nome : '—';
+
+  clientes = JSON.parse(localStorage.getItem(nsKey('clientes'))||'[]');
+  frases = JSON.parse(localStorage.getItem(nsKey('frases'))||'null');
+  if(!frases){ frases = frasesPadrao(); localStorage.setItem(nsKey('frases'), JSON.stringify(frases)); }
+  frases = frases.map((f,i)=>f.id?f:{...f,id:'mig_'+Date.now()+'_'+i});
+  pendencias = JSON.parse(localStorage.getItem(nsKey('pendencias'))||'[]');
+  dividas = JSON.parse(localStorage.getItem(nsKey('guias'))||'[]');
+  checklists = JSON.parse(localStorage.getItem(nsKey('checklists'))||'{}');
+  apikeys = JSON.parse(localStorage.getItem(nsKey('apikeys'))||'[]');
+  rawImport = [];
+  ultimoNomeArquivo = '';
+  resetColMap();
+
+  renderClientes(); salvarClientes();
+  renderFrases(); salvarFrases();
+  renderPendencias(); salvarPendencias();
+  renderDividas();
+  await carregarPlanilhaAtiva();
+}
+
+// INIT
+async function inicializar() {
+  document.getElementById('modal-edit').addEventListener('click',e=>{if(e.target===e.currentTarget)fecharModal();});
+  document.getElementById('modal-cli').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('modal-cli').classList.remove('open');});
+  document.getElementById('modal-config').addEventListener('click',e=>{if(e.target===e.currentTarget)fecharConfig();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharModal();document.getElementById('modal-cli').classList.remove('open');}});
+
+  if(!contabilidades.length || !contabilidadeAtiva()){
+    abrirContabilidades();
+    return; // aguarda a criação/escolha da 1ª contabilidade — criarContabilidade() chama carregarDadosDaContabilidade()
+  }
+  await carregarDadosDaContabilidade();
 }
 
 inicializar();

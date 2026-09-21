@@ -49,3 +49,23 @@ Criar uma central funcional para contabilidades e firmas pequenas com:
 - Não hardcodar API keys.
 - Não misturar dados entre contabilidades.
 - Não vender como substituto do Domínio.
+
+## Estado atual (MVP local, `index.html`)
+
+Implementado e funcional, 100% no navegador (localStorage/IndexedDB, sem backend):
+
+- Multiempresa: cada contabilidade é um workspace isolado (troca pelo seletor no cabeçalho), com todos os dados namespaced por `contabilidadeId`.
+- Cadastro de cliente sem nenhum campo de senha — apenas "Situação de Acesso" (procuração pendente / certificado disponível / acesso autorizado / aguardando documentação).
+- Importação de planilha com detecção e remoção automática de colunas de senha/credencial antes de qualquer exibição ou armazenamento.
+- Painel de Pendências (cadastro, urgência, status, filtro).
+- Guias/Dívidas vinculadas a cliente, com status (aberta/vencida/paga/parcelada/etc.), reconhecimento automático via OCR de boletos/prints (inclui DAS, IRRF, INSS, ICMS, ISS, IBS, CBS, Imposto Seletivo) e exportação PDF/Excel.
+- Checklist mensal por regime tributário e dossiê exportável em PDF, dentro do cadastro de cada cliente.
+- Frases prontas (mensagens de cobrança/orientação), incluindo modelo padrão sobre a Reforma Tributária 2026.
+- Assistente de IA local (sem API) com base de conhecimento sobre DAS MEI, Simples Nacional, IRPF, dívida ativa, parcelamentos e Reforma Tributária (IBS/CBS).
+- Configurações: campo opcional para cadastrar API keys (não utilizado por nenhuma função hoje — reservado para o futuro).
+
+Pendente para as próximas fases (fora do escopo de um app 100% front-end):
+
+- Login real e permissões por usuário interno.
+- Backend com banco persistente (hoje os dados vivem no navegador de quem usa — não sincronizam entre dispositivos nem fazem backup automático em nuvem).
+- Painel administrativo e planos pagos.
