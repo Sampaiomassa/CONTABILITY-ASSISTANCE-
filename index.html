@@ -172,6 +172,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 /* API KEY ROW */
 .apikey-row{display:flex;gap:8px;align-items:center}
+.apikey-card{display:flex;flex-direction:column;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px}
 </style>
 </head>
 <body>
@@ -205,7 +206,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <div class="sum-icon">📋</div><div class="sum-title">Guias/Dívidas</div><div class="sum-desc">Tributos e débitos</div>
     </div>
     <div class="sum-card" id="sc-planilha" onclick="setTab('planilha')">
-      <div class="sum-icon">📊</div><div class="sum-title">Planilhas</div><div class="sum-desc">Importação grupos</div>
+      <div class="sum-icon">📊</div><div class="sum-title">Organizar</div><div class="sum-desc">Importar e classificar</div>
     </div>
     <div class="sum-card" id="sc-frases" onclick="setTab('frases')">
       <div class="sum-icon">💬</div><div class="sum-title" style="color:var(--orm)">Frases Salvas</div><div class="sum-desc">Copiar com 1 clique</div>
@@ -220,7 +221,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <button class="tab active" id="tab-cadastro"     onclick="setTab('cadastro')">👤 Cadastro</button>
     <button class="tab"        id="tab-pendencias"   onclick="setTab('pendencias')">📌 Pendências</button>
     <button class="tab"        id="tab-levantamento" onclick="setTab('levantamento')">📋 Guias/Dívidas</button>
-    <button class="tab"        id="tab-planilha"     onclick="setTab('planilha')">📊 Planilha</button>
+    <button class="tab"        id="tab-planilha"     onclick="setTab('planilha')">📊 Organizar</button>
     <button class="tab"        id="tab-frases"       onclick="setTab('frases')">💬 Frases</button>
     <button class="tab"        id="tab-ia"           onclick="setTab('ia')">🤖 IA</button>
   </div>
@@ -458,10 +459,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="panel gap" id="panel-planilha">
     <div class="card">
       <div class="card-head">
-        <div class="card-title or">📊 Importar Planilha de Grupos</div>
+        <div class="card-title or">📊 Organização Automática de Clientes</div>
         <span class="badge badge-gn">Limite: 50 MB</span>
       </div>
       <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Solte a planilha da contabilidade e o sistema identifica clientes, regime, contato e acesso automaticamente — cria cadastros novos, atualiza os existentes e já sugere pendências para quem estiver com informação incompleta.</div>
 
         <div class="drop" id="xl-drop"
           onclick="document.getElementById('xl-file').click()"
@@ -486,11 +488,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
                 <tr><td>Documento / CPF / CNPJ</td><td>Documento</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
                 <tr><td>Regime / Tributação / Tipo</td><td>Regime Tributário</td><td><span class="badge badge-gn">✓ Mapeado</span></td></tr>
                 <tr><td>Email / E-mail</td><td>E-mail</td><td><span class="badge badge-am">⚠ Opcional</span></td></tr>
-                <tr><td>Gov / Senha / Password / Acesso</td><td>🔒 Bloqueada por segurança</td><td><span class="badge badge-rd">✕ Não importada</span></td></tr>
+                <tr><td>Gov / Senha / Password / Acesso</td><td>🔒 Acesso Protegido</td><td><span class="badge badge-bl">🔒 Isolado</span></td></tr>
               </tbody>
             </table>
           </div>
-          <div style="font-size:11px;color:var(--dim);margin-top:10px">🔒 Qualquer coluna que pareça conter senha, código de acesso ou credencial é detectada e removida automaticamente antes da importação — nada disso fica salvo no sistema.</div>
+          <div style="font-size:11px;color:var(--dim);margin-top:10px">🔒 Qualquer coluna que pareça conter senha, código de acesso ou credencial é isolada num registro protegido por cliente — fica mascarada por padrão, só revela com clique, e <strong>nunca</strong> é enviada à IA nem entra em exportações (CSV, PDF, dossiê).</div>
         </div>
 
         <div id="xl-preview" style="display:none">
@@ -645,9 +647,9 @@ Importe sua planilha na aba Planilha e pergunte aqui!</div>
 <!-- MODAL CONFIGURAÇÕES (API KEYS OPCIONAIS) -->
 <div class="modal-bg" id="modal-config">
   <div class="modal" style="max-width:520px">
-    <h3 style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--orm)">⚙️ Configurações</h3>
-    <div style="font-size:11px;color:var(--dim);margin-bottom:16px">API keys ficam salvas apenas neste navegador. O sistema funciona 100% sem elas — reservadas para recursos futuros de chat/IA que o escritório queira plugar, das ferramentas que já tiver à disposição.</div>
-    <div id="apikey-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:6px;color:var(--orm)">⚙️ Configurações · API Keys</h3>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:16px">Cadastre quantas API keys quiser, das ferramentas que já tiver à disposição. Ficam salvas apenas neste navegador. O sistema funciona 100% sem elas — cada uma é um plus opcional. Marque "usar como cérebro do chat" para que a aba IA use essa chave para responder com mais inteligência; sem chave marcada, a IA local (sem custo, sem internet) continua funcionando normalmente.</div>
+    <div id="apikey-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px"></div>
     <button class="btn btn-ghost btn-sm btn-full" onclick="addApiKeyRow()" style="margin-bottom:16px">+ Adicionar API Key</button>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-ghost btn-sm" onclick="fecharConfig()">Fechar</button>
@@ -781,6 +783,13 @@ function resetarChecklist(clienteId){
   const i=clientes.findIndex(c=>c.id===clienteId);
   if(i>-1)verCliente(i);
 }
+function revelarAcesso(clienteId){
+  const c=clientes.find(x=>x.id===clienteId);
+  if(!c||!c.acessoCredencial)return;
+  const el=document.getElementById('acesso-mask-'+clienteId);
+  if(!el)return;
+  el.textContent = el.textContent.includes('•') ? c.acessoCredencial.valor : '••••••••••••';
+}
 
 function verCliente(i){
   const c=clientes[i];
@@ -799,6 +808,15 @@ function verCliente(i){
       <span style="font-weight:700;color:var(--muted);min-width:110px;font-size:10px;text-transform:uppercase">${k}</span>
       <span style="font-size:13px">${esc(v)}</span>
     </div>`).join('');
+
+  if(c.acessoCredencial){
+    html+=`<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">🔒 Acesso/Credencial (protegido)</div>
+      <div style="font-size:12px;padding:6px 0;display:flex;align-items:center;gap:8px">
+        <span id="acesso-mask-${c.id}" style="font-family:monospace">••••••••••••</span>
+        <button class="btn btn-ghost btn-xs" onclick="revelarAcesso(${c.id})">👁 Revelar</button>
+      </div>
+      <div style="font-size:10px;color:var(--dim)">Importado da planilha em ${esc(c.acessoCredencial.dt)}. Nunca é enviado à IA nem incluído em exportações (CSV/PDF).</div>`;
+  }
 
   html+=`<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Pendencias abertas (${pendCli.length})</div>`;
   html+=pendCli.length
@@ -1323,6 +1341,7 @@ function coletarLinhasDivida(){
 // PLANILHA — fix "Bad compressed size"
 let rawImport=[];
 let ultimoNomeArquivo='';
+let acessosImport=[];
 
 function handleXLDrop(e){const f=e.dataTransfer.files[0];if(f)processarXL(f);}
 function previewPlanilha(input){const f=input.files[0];if(f)processarXL(f);}
@@ -1360,14 +1379,17 @@ function processarXL(file){
       }
       resetColMap();
       if(!rawImport.length){xlStatus('❌ Arquivo vazio ou sem dados.','err');return;}
-      const colsRemovidas = colunasSenha(rawImport);
-      if(colsRemovidas.length){ rawImport = sanitizarPlanilha(rawImport); resetColMap(); }
+      const colsAcesso = colunasSenha(rawImport);
+      const extraido = extrairEremoverAcessos(rawImport, colsAcesso);
+      rawImport = extraido.limpo;
+      acessosImport = extraido.acessos;
+      resetColMap();
       const hdrs=Object.keys(rawImport[0]);
       document.getElementById('xl-head').innerHTML='<tr>'+hdrs.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>';
       document.getElementById('xl-body').innerHTML=rawImport.slice(0,5).map(r=>'<tr>'+hdrs.map(h=>'<td>'+esc(String(r[h]))+'</td>').join('')+'</tr>').join('');
       document.getElementById('xl-prev-title').textContent=file.name+' — '+rawImport.length+' registros (mostrando 5)';
       document.getElementById('xl-preview').style.display='block';
-      xlStatus('✅ '+rawImport.length+' registros lidos.'+(colsRemovidas.length?' 🔒 '+colsRemovidas.length+' coluna(s) de senha/acesso removida(s) automaticamente por seguranca.':'')+' Confirme abaixo.','ok');
+      xlStatus('✅ '+rawImport.length+' registros lidos.'+(colsAcesso.length?' 🔒 '+colsAcesso.length+' coluna(s) de acesso/credencial identificada(s) — serao importadas de forma protegida (mascaradas, nunca enviadas a IA ou exportacoes).':'')+' Confirme abaixo.','ok');
     }catch(err){xlStatus('❌ Erro: '+err.message,'err');}
   };
   reader.readAsArrayBuffer(file);
@@ -1378,7 +1400,7 @@ function xlStatus(msg,tipo){
   el.textContent=msg;el.className='status '+(tipo==='ok'?'s-ok':tipo==='info'?'s-info':'s-err');el.style.display='flex';
 }
 
-// Detecta e remove colunas de senha/credencial antes de qualquer uso/armazenamento
+// Detecta colunas de senha/credencial (nunca ficam nos dados "visiveis" da planilha)
 function colunasSenha(dados){
   if(!dados || !dados.length) return [];
   const hdrs = Object.keys(dados[0]);
@@ -1386,10 +1408,32 @@ function colunasSenha(dados){
   const reSenha = /senha|password|pwd|^pass$/i;
   return hdrs.filter(h => reSenha.test(h) || reSenha.test(map[h]||''));
 }
-function sanitizarPlanilha(dados){
-  const cols = colunasSenha(dados);
-  if(!cols.length) return dados;
-  return dados.map(r=>{ const o={...r}; cols.forEach(c=>delete o[c]); return o; });
+// Extrai o valor das colunas de acesso para uma lista protegida a parte
+// e devolve a planilha "limpa" (sem essas colunas) para preview/IA/exportacoes.
+function extrairEremoverAcessos(dados, cols){
+  if(!cols || !cols.length) return { limpo: dados, acessos: dados.map(()=>null) };
+  const acessos = dados.map(r=>{
+    const partes = cols.map(c=>{ const v=String(r[c]||'').trim(); return v?`${c}: ${v}`:''; }).filter(Boolean);
+    return partes.length ? partes.join(' | ') : null;
+  });
+  const limpo = dados.map(r=>{ const o={...r}; cols.forEach(c=>delete o[c]); return o; });
+  return { limpo, acessos };
+}
+
+function gerarPendenciasAutomaticas(lista){
+  let count=0;
+  lista.forEach(c=>{
+    if(!c.regime){
+      pendencias.unshift({id:Date.now()+Math.random(),clienteId:c.id,clienteNome:c.nome,tipo:'Informação incompleta',urgencia:'baixa',resp:'',obs:'Regime tributário não identificado na importação.',status:'aberta',dt:new Date().toLocaleDateString('pt-BR')});
+      count++;
+    }
+    if(!c.acessoCredencial && !c.acesso){
+      pendencias.unshift({id:Date.now()+Math.random(),clienteId:c.id,clienteNome:c.nome,tipo:'Acesso pendente',urgencia:'media',resp:'',obs:'Nenhum acesso/credencial identificado na importação.',status:'aberta',dt:new Date().toLocaleDateString('pt-BR')});
+      count++;
+    }
+  });
+  if(count){ salvarPendencias(); renderPendencias(); }
+  return count;
 }
 
 async function confirmarImport(){
@@ -1405,11 +1449,21 @@ async function confirmarImport(){
     cnpj:cd?String(r[cd]).trim():'',
     email:ce?String(r[ce]).trim():'',
     regime:cr?String(r[cr]).trim():'',
-    acesso:'',
+    acesso:acessosImport[i]?'Acesso autorizado':'',
+    acessoCredencial: acessosImport[i] ? {valor:acessosImport[i], origem:'planilha', dt:new Date().toLocaleDateString('pt-BR')} : null,
     obs:'Importado',dt:new Date().toLocaleDateString('pt-BR')
   })).filter(c=>c.nome&&c.nome!=='undefined');
-  imp.forEach(im=>{if(!clientes.find(c=>c.nome===im.nome&&c.cnpj===im.cnpj))clientes.push(im);});
+  const novos=[];
+  imp.forEach(im=>{
+    const existente = clientes.find(c=>c.nome===im.nome&&c.cnpj===im.cnpj);
+    if(!existente){ clientes.push(im); novos.push(im); }
+    else{
+      if(!existente.regime && im.regime) existente.regime = im.regime;
+      if(!existente.acessoCredencial && im.acessoCredencial){ existente.acessoCredencial = im.acessoCredencial; existente.acesso = existente.acesso || 'Acesso autorizado'; }
+    }
+  });
   salvarClientes();renderClientes();
+  const nPend = gerarPendenciasAutomaticas(novos);
 
   // Salva planilha completa no IndexedDB
   const nomeArq = document.getElementById('xl-prev-title').textContent.split(' — ')[0] || 'Planilha';
@@ -1417,7 +1471,7 @@ async function confirmarImport(){
   const ok2 = await salvarPlanilhaDB(rawImport, nomeArq);
 
   const ok=document.getElementById('xl-ok');
-  ok.textContent='✅ '+imp.length+' clientes importados'+(ok2?' · planilha salva automaticamente':'')+'!';
+  ok.textContent='✅ Relatório de organização: '+novos.length+' cliente(s) novo(s), '+(imp.length-novos.length)+' atualizado(s)'+(nPend?', '+nPend+' pendência(s) sugerida(s) automaticamente':'')+(ok2?' · planilha salva':'')+'.';
   ok.style.display='flex';
   document.getElementById('xl-preview').style.display='none';
   xlStatus('✅ Importação concluída.'+(ok2?' Planilha salva — será restaurada na próxima abertura.':''),'ok');
@@ -2178,7 +2232,7 @@ Para ver todos os dados de um cliente específico, pergunte pelo nome completo o
 }
 
 // ── Interface do chat ──
-function enviarIA() {
+async function enviarIA() {
   const inp = document.getElementById('ia-input');
   const txt = inp.value.trim();
   if (!txt) return;
@@ -2188,19 +2242,32 @@ function enviarIA() {
 
   const btn = document.getElementById('ia-send-btn');
   btn.disabled = true;
-  btn.textContent = '⏳';
 
-  // Simula "digitando" por um breve instante (UX)
-  setTimeout(() => {
-    try {
-      const resposta = responderAssistente(txt);
-      addMsg(resposta, 'bot');
-    } catch(e) {
-      addMsg('❌ Erro interno: ' + e.message, 'bot');
+  const keyAtiva = chaveAtivaChat();
+  try {
+    if(keyAtiva){
+      btn.textContent = '🧠';
+      const contexto = montarContextoIA();
+      let resposta = null;
+      try{
+        resposta = await chamarIAExterna(keyAtiva, txt, contexto);
+      }catch(e){
+        console.warn('IA externa falhou, usando assistente local:', e);
+      }
+      if(resposta){
+        addMsg(resposta + '\n\n_(respondido via ' + esc(keyAtiva.nome||keyAtiva.tipo) + ')_', 'bot');
+        btn.disabled = false; btn.textContent = 'Enviar ↵';
+        return;
+      }
+      addMsg('⚠️ Não consegui falar com '+(keyAtiva.nome||keyAtiva.tipo)+' agora — respondendo com o assistente local.', 'bot');
     }
-    btn.disabled = false;
-    btn.textContent = 'Enviar ↵';
-  }, 120);
+    const resposta = responderAssistente(txt);
+    addMsg(resposta, 'bot');
+  } catch(e) {
+    addMsg('❌ Erro interno: ' + e.message, 'bot');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Enviar ↵';
 }
 
 function enviarSug(txt) {
@@ -2380,19 +2447,143 @@ function renderApiKeys(){
   const el = document.getElementById('apikey-list');
   if(!apikeys.length){ el.innerHTML = '<div class="empty" style="padding:10px">Nenhuma API key cadastrada.</div>'; return; }
   el.innerHTML = apikeys.map((k,i)=>`
-    <div class="apikey-row">
-      <input class="fi" placeholder="Nome do serviço" value="${esc(k.nome)}" oninput="apikeys[${i}].nome=this.value" style="flex:1"/>
-      <input class="fi" placeholder="API Key" value="${esc(k.chave)}" oninput="apikeys[${i}].chave=this.value" style="flex:2" type="password"/>
-      <button class="btn btn-rd btn-xs" onclick="removeApiKeyRow(${i})">✕</button>
+    <div class="apikey-card">
+      <div style="display:flex;gap:8px">
+        <input class="fi" placeholder="Nome do serviço" value="${esc(k.nome)}" oninput="apikeys[${i}].nome=this.value" style="flex:1.3"/>
+        <select class="fi" style="flex:1" onchange="apikeys[${i}].tipo=this.value;renderApiKeys();">
+          <option value="anthropic" ${k.tipo==='anthropic'?'selected':''}>Anthropic (Claude)</option>
+          <option value="openai" ${k.tipo==='openai'?'selected':''}>OpenAI (ChatGPT)</option>
+          <option value="google" ${k.tipo==='google'?'selected':''}>Google (Gemini)</option>
+          <option value="custom" ${k.tipo==='custom'?'selected':''}>Outra (URL customizada)</option>
+        </select>
+        <button class="btn btn-rd btn-xs" onclick="removeApiKeyRow(${i})">✕</button>
+      </div>
+      <input class="fi" placeholder="API Key" value="${esc(k.chave)}" oninput="apikeys[${i}].chave=this.value" type="password"/>
+      ${k.tipo==='custom'?`<input class="fi" placeholder="URL do endpoint (compatível OpenAI: /chat/completions)" value="${esc(k.url||'')}" oninput="apikeys[${i}].url=this.value"/>`:''}
+      <input class="fi" placeholder="Modelo (opcional — deixe em branco para o padrão)" value="${esc(k.modelo||'')}" oninput="apikeys[${i}].modelo=this.value"/>
+      <label class="chk-item"><input type="checkbox" ${k.usarChat?'checked':''} onchange="apikeys[${i}].usarChat=this.checked;atualizarModoIA();"/> Usar como cérebro do chat (aba IA)</label>
     </div>`).join('');
 }
-function addApiKeyRow(){ apikeys.push({nome:'',chave:''}); renderApiKeys(); }
-function removeApiKeyRow(i){ apikeys.splice(i,1); renderApiKeys(); }
+function addApiKeyRow(){ apikeys.push({nome:'',chave:'',tipo:'anthropic',modelo:'',url:'',usarChat:false}); renderApiKeys(); }
+function removeApiKeyRow(i){ apikeys.splice(i,1); renderApiKeys(); atualizarModoIA(); }
 function salvarApiKeys(){
   apikeys = apikeys.filter(k=>k.nome.trim()||k.chave.trim());
   localStorage.setItem(nsKey('apikeys'), JSON.stringify(apikeys));
   renderApiKeys();
+  atualizarModoIA();
   fecharConfig();
+}
+
+// ──────────────────────────────────────
+// IA EXTERNA (opcional) — usa a API key do próprio cliente como "cérebro" do chat
+// ──────────────────────────────────────
+function chaveAtivaChat(){
+  return apikeys.find(k=>k.usarChat && k.chave && k.chave.trim());
+}
+function atualizarModoIA(){
+  const badge = document.getElementById('ia-mode-badge');
+  if(!badge) return;
+  const ativa = chaveAtivaChat();
+  if(ativa){ badge.textContent = '🔑 '+(ativa.nome||ativa.tipo); badge.className='badge badge-bl'; }
+  else { badge.textContent = '✅ Sem API'; badge.className='badge badge-gn'; }
+}
+
+// Contexto enviado à IA externa — apenas campos explicitamente seguros.
+// Acessos/credenciais protegidos NUNCA entram aqui, por design (não são lidos deste objeto).
+function montarContextoIA(){
+  const nomeContab = (contabilidadeAtiva()||{}).nome || 'Escritório';
+  let ctx = `Você é o assistente interno do escritório de contabilidade "${nomeContab}". Responda em português, de forma direta e prática, com base apenas nos dados abaixo.\n\n`;
+  ctx += `REGRA OBRIGATÓRIA: nunca invente, solicite ou repita senhas, códigos de acesso ou credenciais de clientes. Esses dados, quando existem, ficam protegidos no sistema e não são enviados a você. Se perguntarem sobre senha/acesso, oriente a consultar a aba Cadastro do sistema.\n\n`;
+  if(clientes.length){
+    ctx += 'Clientes cadastrados:\n' + clientes.slice(0,100).map((c,i)=>
+      `${i+1}. ${c.nome} | CNPJ/CPF: ${c.cnpj||c.cpf||'-'} | Regime: ${c.regime||'-'} | Situação de acesso: ${c.acesso||'não definida'} | WhatsApp: ${c.whatsapp||'-'} | Email: ${c.email||'-'}`
+    ).join('\n') + '\n\n';
+  }
+  const pendAbertas = pendencias.filter(p=>p.status!=='resolvida');
+  if(pendAbertas.length){
+    ctx += 'Pendências abertas:\n' + pendAbertas.slice(0,60).map(p=>`- ${p.clienteNome}: ${p.tipo} (urgência ${p.urgencia})`).join('\n') + '\n\n';
+  }
+  if(dividas.length){
+    ctx += 'Guias/débitos:\n' + dividas.slice(0,60).map(d=>`- ${d.clienteNome}: ${d.tributo} R$ ${Number(d.valor||0).toFixed(2)} (${statusLabel(d.status)})`).join('\n') + '\n\n';
+  }
+  return ctx;
+}
+
+async function fetchComTimeout(url, opts, ms){
+  const ctrl = new AbortController();
+  const id = setTimeout(()=>ctrl.abort(), ms||20000);
+  try{ return await fetch(url, {...opts, signal: ctrl.signal}); }
+  finally{ clearTimeout(id); }
+}
+
+async function chamarAnthropic(chave, pergunta, contexto, modelo){
+  const resp = await fetchComTimeout('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'content-type':'application/json',
+      'x-api-key': chave,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model: modelo || 'claude-3-5-haiku-20241022',
+      max_tokens: 700,
+      system: contexto,
+      messages: [{role:'user', content: pergunta}]
+    })
+  });
+  if(!resp.ok) throw new Error('Anthropic HTTP '+resp.status);
+  const data = await resp.json();
+  return data.content?.[0]?.text || null;
+}
+
+async function chamarOpenAI(chave, pergunta, contexto, modelo){
+  const resp = await fetchComTimeout('https://api.openai.com/v1/chat/completions', {
+    method:'POST',
+    headers:{'content-type':'application/json','authorization':'Bearer '+chave},
+    body: JSON.stringify({
+      model: modelo || 'gpt-4o-mini',
+      messages: [{role:'system',content:contexto},{role:'user',content:pergunta}],
+      max_tokens: 700
+    })
+  });
+  if(!resp.ok) throw new Error('OpenAI HTTP '+resp.status);
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || null;
+}
+
+async function chamarGoogle(chave, pergunta, contexto, modelo){
+  const mdl = modelo || 'gemini-1.5-flash';
+  const resp = await fetchComTimeout('https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+encodeURIComponent(chave), {
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body: JSON.stringify({ contents:[{parts:[{text: contexto+'\n\nPergunta: '+pergunta}]}] })
+  });
+  if(!resp.ok) throw new Error('Google HTTP '+resp.status);
+  const data = await resp.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+}
+
+async function chamarCustom(key, pergunta, contexto){
+  if(!key.url) throw new Error('URL customizada não configurada');
+  const resp = await fetchComTimeout(key.url, {
+    method:'POST',
+    headers:{'content-type':'application/json','authorization':'Bearer '+key.chave},
+    body: JSON.stringify({
+      model: key.modelo||'default',
+      messages:[{role:'system',content:contexto},{role:'user',content:pergunta}]
+    })
+  });
+  if(!resp.ok) throw new Error('Custom HTTP '+resp.status);
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || data.content?.[0]?.text || null;
+}
+
+async function chamarIAExterna(keyAtiva, pergunta, contexto){
+  if(keyAtiva.tipo==='anthropic') return await chamarAnthropic(keyAtiva.chave, pergunta, contexto, keyAtiva.modelo);
+  if(keyAtiva.tipo==='openai')    return await chamarOpenAI(keyAtiva.chave, pergunta, contexto, keyAtiva.modelo);
+  if(keyAtiva.tipo==='google')    return await chamarGoogle(keyAtiva.chave, pergunta, contexto, keyAtiva.modelo);
+  return await chamarCustom(keyAtiva, pergunta, contexto);
 }
 
 // ──────────────────────────────────────
@@ -2418,6 +2609,7 @@ async function carregarDadosDaContabilidade(){
   renderFrases(); salvarFrases();
   renderPendencias(); salvarPendencias();
   renderDividas();
+  atualizarModoIA();
   await carregarPlanilhaAtiva();
 }
 
