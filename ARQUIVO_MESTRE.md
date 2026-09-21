@@ -29,17 +29,17 @@ Fluxo ideal:
 
 Cliente manda bagunça → Assistente Contábil reconhece padrões e organiza → Equipe confere → Domínio recebe informação pronta.
 
-## 3. Integrações externas (opcional e futuro)
+## 3. Recursos futuros de IA/chat (opcional)
 
 O Assistente Contábil não tem nenhuma dependência de API externa, IA ou serviço de terceiros embutida na arquitetura.
 
-Futuramente, poderá existir uma camada opcional de integrações via **BANKS** — projeto à parte, que funciona como hub de API keys: o cliente cadastra a chave de qualquer serviço externo que queira usar (bancário, fiscal, IA, ou outro). O Assistente Contábil apenas consome essa camada quando habilitada; nunca depende dela para as funções básicas.
+Se no futuro o produto ganhar algum recurso de chat/IA, ele entra apenas como um campo de configuração onde a contabilidade cadastra quantas API keys quiser, de qualquer serviço que já tenha à disposição. Não há hub, não há projeto de terceiros embutido, não há fornecedor fixo — a contabilidade escolhe o que (e se) quer plugar.
 
 Regras:
 
 - O Assistente Contábil tem repositório próprio e funciona sozinho.
 - Nenhum código de integração é obrigatório no core do produto.
-- Se/quando a integração com BANKS for implementada, ela entra como módulo plugável e desligável, nunca como dependência.
+- Qualquer recurso de chat/IA entra como módulo plugável e desligável, nunca como dependência.
 - Não hardcodar chave alguma no repositório do Assistente Contábil.
 
 ## 4. Modelo comercial
@@ -86,7 +86,7 @@ Contabilidade contratante
  │    └── Relatórios
  ├── Configurações
  ├── Exportações
- └── Integrações opcionais (BANKS / API keys do cliente)
+ └── Configuração opcional de API keys do cliente (uso futuro em chat/IA)
 ```
 
 IDs mínimos recomendados desde o início:
@@ -134,7 +134,7 @@ Campos recomendados:
 - plano contratado;
 - data de cadastro;
 - configurações internas;
-- integrações habilitadas (BANKS, quando existir).
+- API keys cadastradas pelo cliente (opcional, para uso futuro em chat/IA).
 
 ### 7.2 Cadastro de clientes
 
@@ -378,19 +378,19 @@ Checklist exemplo:
 - observações internas preenchidas;
 - pronto para lançar/conferir no Domínio.
 
-## 8. Integrações futuras via BANKS
+## 8. Recursos futuros de chat/IA (opcional)
 
-O Assistente Contábil funciona 100% sem nenhuma integração externa.
+O Assistente Contábil funciona 100% sem nenhum recurso de IA.
 
-Quando o BANKS (hub de API keys do cliente, projeto à parte) estiver disponível para integração, o sistema poderá ganhar, de forma opcional:
+Se o produto ganhar futuramente algum chatbox ou recurso de IA, ele entra apenas como um campo simples de configuração: a contabilidade cadastra quantas API keys quiser, de qualquer serviço que já tenha à disposição. Com isso, o sistema poderia ganhar, de forma opcional:
 
-- análise automática de documentos por serviços de terceiros escolhidos pelo cliente;
+- análise automática de documentos;
 - resumo inteligente de PDFs;
 - classificação avançada de guias;
 - geração de mensagens personalizadas;
 - automações de conferência.
 
-Essa camada nunca é pré-requisito para o funcionamento do produto e não fica presa a um fornecedor específico — cada contabilidade decide quais serviços externos (se algum) quer plugar via BANKS.
+Essa camada nunca é pré-requisito para o funcionamento do produto e não fica presa a um fornecedor específico — cada contabilidade decide quais chaves (se alguma) quer cadastrar.
 
 ## 9. Segurança obrigatória
 
@@ -427,7 +427,7 @@ Evolução futura:
 - auditoria;
 - planos pagos;
 - painel administrativo;
-- integração opcional com BANKS.
+- campo opcional de API keys, caso o produto ganhe recurso de chat/IA.
 
 ## 11. Fases recomendadas no Assistente Contábil
 
@@ -455,11 +455,11 @@ Evolução futura:
 - garantir que uma contabilidade não veja dados de outra;
 - criar seletor/ambiente por contabilidade no MVP local.
 
-### Fase D — Integração opcional com BANKS
+### Fase D — Recurso opcional de chat/IA
 
-- campo de configuração de API keys por contabilidade (via BANKS);
-- estrutura de plugin/adaptador para serviços externos escolhidos pelo cliente;
-- garantir que a ausência dessa integração não afete nenhuma função básica.
+- campo de configuração de API keys por contabilidade (quantas o cliente quiser);
+- estrutura de plugin/adaptador simples para o serviço que o cliente escolher plugar;
+- garantir que a ausência desse recurso não afete nenhuma função básica.
 
 ### Fase E — Comercialização
 
@@ -477,7 +477,7 @@ Use este prompt no Claude Code quando o repositório do Assistente Contábil est
 Você é um arquiteto sênior fullstack, especialista em SaaS multiempresa, segurança, automações, contabilidade operacional e UX de sistemas internos.
 
 Contexto:
-Este projeto é o Assistente Contábil, um software funcional e independente para escritórios de contabilidade e firmas pequenas. Ele não depende de nenhuma API externa, IA ou serviço de terceiros para funcionar. Futuramente poderá existir uma camada opcional de integrações via BANKS (hub de API keys do cliente), mas isso nunca é pré-requisito.
+Este projeto é o Assistente Contábil, um software funcional e independente para escritórios de contabilidade e firmas pequenas. Ele não depende de nenhuma API externa, IA ou serviço de terceiros para funcionar. Futuramente poderá existir um campo opcional onde o cliente cadastra suas próprias API keys, caso o produto ganhe algum recurso de chat/IA, mas isso nunca é pré-requisito.
 
 Objetivo do produto:
 Criar uma central operacional para contabilidades organizarem clientes, documentos, pendências, guias, débitos, mensagens, checklists e relatórios — reconhecendo padrões automaticamente — complementando o Domínio sem substituí-lo.
@@ -491,7 +491,7 @@ Verifique:
 4. O que deve ser removido por segurança, especialmente campos de senha GOV.br/e-CAC/prefeitura.
 5. Onde falta separação por contabilidadeId.
 6. Como transformar o app em produto multiempresa.
-7. Onde futuramente integrar BANKS como camada opcional, sem criar dependência.
+7. Onde futuramente incluir um campo opcional de API keys do cliente, sem criar dependência.
 8. Quais riscos técnicos existem.
 9. Qual é o menor plano seguro de evolução.
 
@@ -518,7 +518,7 @@ O projeto será considerado bem estruturado quando:
 - clientes/documentos/pendências/guias estiverem organizados;
 - exportações funcionarem;
 - não houver senhas sensíveis armazenadas;
-- a eventual integração com BANKS puder ser ativada como plus, sem quebrar o produto básico;
+- o eventual recurso de chat/IA puder ser ativado como plus (via API keys do próprio cliente), sem quebrar o produto básico;
 - o produto puder ser demonstrado e vendido para escritórios reais.
 
 ## 14. Resumo executivo
@@ -531,7 +531,7 @@ Ele complementa o Domínio, preparando informações antes das rotinas oficiais.
 
 O sistema é 100% independente e funciona sozinho, sem depender de nenhuma API ou IA externa.
 
-Uma camada opcional e futura de integrações externas poderá ser plugada via BANKS (hub de API keys do cliente), sem nunca virar dependência.
+Se o produto ganhar futuramente um chatbox ou recurso de IA, ele entra apenas como um campo simples de configuração onde o cliente cadastra quantas API keys quiser, das ferramentas que já tiver à disposição — sem nunca virar dependência.
 
 A arquitetura deve ser multiempresa e segura.
 

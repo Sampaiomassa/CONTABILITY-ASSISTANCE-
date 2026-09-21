@@ -18,7 +18,7 @@ O Assistente Contábil é um projeto 100% independente.
 
 - Nenhuma funcionalidade essencial depende de API, IA ou serviço externo.
 - Reconhecimento de documentos, organização, checklists e exportações rodam localmente.
-- Uma camada opcional e futura de integrações externas poderá ser plugada via o **BANKS** (projeto à parte, que funciona como hub de API keys: o cliente cadastra a chave do serviço externo que quiser usar — bancário, fiscal, IA, o que for). Essa camada é totalmente desacoplada e opcional; o produto funciona por completo sem ela.
+- Se no futuro o produto ganhar algum recurso de chat/IA, ele é opcional: apenas um campo de configuração onde a contabilidade cadastra quantas API keys quiser, de qualquer serviço que já tenha à disposição. Sem hub, sem projeto de terceiros embutido, sem dependência de nenhum fornecedor específico.
 - Nenhum fornecedor de IA específico é parte da arquitetura do Assistente Contábil.
 
 ## Arquivos iniciais
@@ -41,7 +41,7 @@ Criar uma central funcional para contabilidades e firmas pequenas com:
 - mensagens prontas;
 - relatórios/exportações;
 - separação entre contabilidades (multiempresa);
-- camada opcional e futura de integrações externas via BANKS.
+- campo opcional de configuração de API keys do cliente, para uso futuro em recursos de chat/IA, caso implementados.
 
 ## Segurança obrigatória
 

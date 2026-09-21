@@ -27,11 +27,11 @@
 - Preparar IDs internos: contabilidadeId, clienteId, documentoId, pendenciaId.
 - Evitar mistura entre contabilidades.
 
-## Fase 4 — Integração opcional com BANKS
+## Fase 4 — Recurso opcional de chat/IA
 
-- Adicionar configuração de API keys por contabilidade, via BANKS (hub de integrações do cliente).
-- Estrutura de plugin/adaptador para serviços externos que o cliente escolher plugar.
-- Manter funcionamento 100% completo sem essa integração.
+- Adicionar campo de configuração de API keys por contabilidade (quantas o cliente quiser cadastrar).
+- Estrutura de plugin/adaptador simples para o serviço que o cliente escolher plugar.
+- Manter funcionamento 100% completo sem esse recurso.
 
 ## Fase 5 — Produto comercial
 

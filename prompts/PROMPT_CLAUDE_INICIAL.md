@@ -11,7 +11,7 @@ Leia primeiro:
 Regras obrigatórias:
 
 - O Assistente Contábil é um projeto 100% independente: não depende de nenhuma IA, API externa ou serviço de terceiros para funcionar.
-- Uma camada opcional e futura de integrações poderá ser plugada via BANKS (hub de API keys do cliente, projeto à parte). Isso nunca é pré-requisito para o funcionamento do produto.
+- Se o produto ganhar futuramente um chatbox ou recurso de IA, ele entra apenas como um campo de configuração onde o cliente cadastra quantas API keys quiser, das ferramentas que já tiver à disposição. Isso nunca é pré-requisito para o funcionamento do produto.
 - Não armazenar senha GOV.br, e-CAC, prefeitura ou credenciais sensíveis.
 - Não hardcodar API keys.
 - Não fazer refatoração gigante sem análise prévia.
