@@ -8,8 +8,8 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win",
-    "dist:all": "electron-builder -mwl"
+    "dist": "electron-builder --win --publish never",
+    "dist:all": "electron-builder -mwl --publish never"
   },
   "devDependencies": {
     "electron": "^33.0.0",
@@ -23,6 +23,7 @@
   "build": {
     "appId": "com.assistentecontabil.app",
     "productName": "Assistente Contábil",
+    "publish": null,
     "directories": {
       "output": "dist"
     },
